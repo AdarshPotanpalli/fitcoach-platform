@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#00ACC1"            # Keep that vibrant cyan-blue
+backgroundColor = "#121212"         # Deep black stays
+secondaryBackgroundColor = "#263238" # Slightly lighter slate blue-gray for more depth
+textColor = "#CFD8DC"               # A softer, cooler light gray for fresher feel
+font = "serif"
