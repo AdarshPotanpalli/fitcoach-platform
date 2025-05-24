@@ -11,10 +11,11 @@ try:
                 st.Page("pages/user_guide.py", title="ℹ️ Getting Started Guide"),
                 st.Page("pages/dashboard.py", title="🏠 Dashboard", default=True),
                 st.Page("pages/ai_coach.py", title="🤖 Your AI Coach"),
-                st.Page("pages/feedback_form.py", title="📝 How was your day?")
+                st.Page("pages/detailed_plan.py", title="📝 Your detailed daily plan")
             ],
             "👤 Your Account": [
-                st.Page("pages/settings.py", title="⚙️ Settings")
+                st.Page("pages/auth.py", title="🚪Logout"),
+                st.Page("pages/onboarding_form.py", title="🔧 Personalization")
             ]
         }
     else:

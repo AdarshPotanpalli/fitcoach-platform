@@ -35,6 +35,7 @@ def metrics(df: pd.DataFrame):
 def graphs(df: pd.DataFrame):
     """displays the graph tabs
     """
+    st.markdown("---")
     st.subheader("📈 Progress Over Time")
 
     # Tabs for each metric
@@ -90,6 +91,7 @@ def graphs(df: pd.DataFrame):
 def plan(today):
     """displays today's plan
     """
+    st.markdown("---")
     st.subheader(f"📅 Today's Plan - {today.strftime('%A, %B %d')}")
     plan_df = pd.DataFrame(st.session_state.todays_plan)
     plan_df.columns = ["Time", "Activity"]
@@ -98,8 +100,8 @@ def plan(today):
     # Display a static, clean table with no index shown
     st.table(plan_df)
 
-    if st.button("🧠 Explore Details in AI Coach"):
-        st.switch_page("pages/ai_coach.py")
+    if st.button("📋 Explore details of your daily plan"):
+        st.switch_page("pages/detailed_plan.py")
 
 @st.dialog("Adjust your plan")
 def adjust():
@@ -112,18 +114,28 @@ def adjust():
     ]
     if st.button("Submit"):
         st.rerun()
+        st.toast("✅ Plan updated successfully!")
         
 def adjust_plan():
     """Adjust today's plan
     """
+    st.markdown("---")
     st.markdown("""
-    ### 🕒 Behind Schedule?
-    ➤ Let’s adapt and keep the momentum going!  
-    ➤ Hit the button below to adjust today’s plan 💼➡️💪
+    ### 🕒 Behind Schedule?  
+    Hit the button below to adjust today’s plan 💼➡️💪
     """)
     if st.button("🔄 Update my plan"):
         adjust()
             
+def talk_with_coach():
+    # AI Coach Prompt
+    st.markdown("---")
+    st.markdown("""
+    ### 🧑‍🏫 Need Personalized Advice?
+    Your AI Coach is ready to assist you with tailored tips, planning, and motivation.
+    """)
+    if st.button("🤖 Talk with coach"):
+        st.switch_page("pages/ai_coach.py")
 
 def footnote():
     """A Motivational footnote
@@ -163,6 +175,7 @@ if __name__ == "__main__":
         
     plan(today)
     adjust_plan()
+    talk_with_coach()
     footnote()
         
     
