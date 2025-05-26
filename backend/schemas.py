@@ -13,3 +13,10 @@ class CreateUserResponse(BaseModel):
     
     class Config: # setting the compatibility of return of an endpoint
         from_attributes = True
+
+class LoginUser(BaseModel):
+    email: EmailStr
+    password: str    
+    
+class TokenData(BaseModel):
+    email: str | None = None
