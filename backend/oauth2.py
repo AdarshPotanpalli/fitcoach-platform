@@ -32,6 +32,15 @@ def create_access_token(data: dict):
 
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(database.get_db)):
     
+    # if the passed token in header is blacklisted (user has logged out)
+    blacklisted_token = db.query(orm_models.BlacklistedTokens).filter(orm_models.BlacklistedTokens.token == token).first()
+    if blacklisted_token:
+        raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token has been revoked",
+        headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -41,7 +50,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
     try:
         # decode the token
         payload = jwt.decode(token = token, key = SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("email")
+        email = payload.get("email") # get the payload
         if email is None:
             raise credentials_exception
         token_data = schemas.TokenData(email= email) # schema validation

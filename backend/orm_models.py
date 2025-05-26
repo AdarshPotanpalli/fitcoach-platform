@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from .database import Base
+from datetime import datetime
 
 class Users(Base):
     __tablename__ = "users"
@@ -25,4 +26,13 @@ class Feedback(Base):
     task1_done = Column(Boolean, nullable=False)
     task2_done = Column(Boolean, nullable=False)
     task3_done = Column(Boolean, nullable=False)
+
+# for logout we need to blacklist tokens, 
+# to store the blacklisted tokens we are creating this table    
+class BlacklistedTokens(Base):
+    __tablename__ = "blacklistedtokens"
     
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    token = Column(String, unique=True, nullable=False)
+    blacklisted_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    email = Column(String, nullable=False)  # Optional: track who logged out
