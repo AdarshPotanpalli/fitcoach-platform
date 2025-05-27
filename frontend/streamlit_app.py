@@ -1,5 +1,11 @@
 import streamlit as st
 
+# backend url
+API_URL = "http://127.0.0.1:8000"
+
+if "token" not in st.session_state:
+    st.session_state.token = "" # default jwt token
+
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False  # Default state
 
@@ -14,7 +20,7 @@ try:
                 st.Page("pages/detailed_plan.py", title="📝 Your detailed daily plan")
             ],
             "👤 Your Account": [
-                st.Page("pages/auth.py", title="🚪Logout"),
+                st.Page("pages/logout.py", title="🚪Logout"),
                 st.Page("pages/onboarding_form.py", title="🔧 Personalization")
             ]
         }
@@ -24,7 +30,8 @@ try:
                 st.Page("pages/user_guide.py", title="ℹ️ Getting Started Guide", default=True),
             ],
             "👤 Your Account": [
-                st.Page("pages/auth.py", title="🔐 Login/Register")
+                st.Page("pages/login.py", title="🔐 Login"),
+                st.Page("pages/register.py", title ="🧾 Sign Up")
             ]
         }
 

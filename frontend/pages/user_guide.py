@@ -12,9 +12,9 @@ with st.expander("🚀 Getting Started"):
     st.subheader("1. Login / Create Your Profile")
     st.markdown("- 🔐 Use **Google Login** or register with **email and password**.")
     st.markdown("- Your account securely stores your preferences and progress.")
-    if st.button("Login / Register Now"):
-        st.info("Redirecting to login page...")
-        st.switch_page("pages/auth.py")
+    if st.button("📝 Register Now"):
+        st.info("Redirecting to Sign Up page...")
+        st.switch_page("pages/register.py")
 
 # Navigation Overview
 with st.expander("🧭 Navigation Overview"):
