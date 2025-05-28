@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
+from typing import List, Optional
 
 class CreateUser(BaseModel):
     email: EmailStr
@@ -20,3 +21,12 @@ class LoginUser(BaseModel):
     
 class TokenData(BaseModel):
     email: str | None = None
+    
+class Preferences(BaseModel):
+    goal: str
+    lifestyle: str
+    preferred_timings: List[str]
+    note: Optional[str] = None
+    
+class PreferencesOut(Preferences):
+    owner_email: str

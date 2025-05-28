@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey
+from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
+from sqlalchemy.dialects.postgresql import ARRAY
 
 class Users(Base):
     __tablename__ = "users"
@@ -9,15 +11,23 @@ class Users(Base):
     username = Column(String, nullable= False)
     password = Column(String, unique= True, nullable= False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # setting the relationship
+    preferences = relationship("Preferences", back_populates="owner")
+    
 
 class Preferences(Base):
     __tablename__ = "preferences"
     
     id = Column(Integer, unique=True, nullable=False, primary_key= True, autoincrement=True)
     goal = Column(String, nullable= False)
-    level = Column(String, nullable= False) 
     lifestyle = Column(String, nullable= False)
-    preferred_timings = Column(String, nullable= False)
+    preferred_timings = Column(ARRAY(String), nullable= False)
+    note = Column(String)
+    
+    # setting the foreign key
+    owner_email = Column(String, ForeignKey("users.email", ondelete= "CASCADE"), nullable= False)
+    owner = relationship("Users", back_populates="preferences")
     
 class Feedback(Base):
     __tablename__ = "feedback"
