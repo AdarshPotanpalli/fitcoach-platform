@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM :str
     ACCESS_TOKEN_EXPIRE_MINUTES : int
+    COOKIE_SECRET : str
+    COOKIE_PREFIX : str
 
     class Config:
         env_file = ".env"

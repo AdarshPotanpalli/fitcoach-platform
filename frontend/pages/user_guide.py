@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="AI Health Coach - User Guide", page_icon="📘")
+# st.set_page_config(page_title="AI Health Coach - User Guide", page_icon="📘")
 
 st.title("📘 Welcome to Your Personal AI Health Coach App!")
 st.write("This guide helps you get the most out of your personalized health journey.")

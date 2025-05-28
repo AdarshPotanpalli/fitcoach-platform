@@ -1,9 +1,10 @@
 import streamlit as st
 import requests
 from frontend.streamlit_app import API_URL
+from frontend import utils
 
 def show_logout():
-    st.set_page_config(page_title="Logout", page_icon="🚪")
+    # st.set_page_config(page_title="Logout", page_icon="🚪")
     st.title("🚪 Logout")
 
     st.markdown("Thank you for using FitCoach! We'd love to hear your feedback before you go.")
@@ -25,10 +26,10 @@ def show_logout():
 
     # Logout Button
     if st.button("Logout", use_container_width=True):
-        # Perform logout logic here (API call + session cleanup)
+        # Perform logout logic here (API call + cookies cleanup)
         try:
             headers = {
-                "Authorization": f"Bearer {st.session_state.token}"
+                "Authorization": f"Bearer {utils.get_token()}"
             }
             logout_response = requests.post(url=(API_URL+"/auth/logout"), headers=headers)
             if logout_response.status_code == 200: 
@@ -38,9 +39,8 @@ def show_logout():
                 # if comments:
                 #     st.info(f"Comments: {comments}")
 
-                # Clear session state if needed
-                for key in list(st.session_state.keys()):
-                    del st.session_state[key]
+                # Clear cookies
+                utils.logout_user()
 
                 st.rerun()
             else:

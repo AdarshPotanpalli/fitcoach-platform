@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="Detailed Daily Plan", page_icon="📋")
+# st.set_page_config(page_title="Detailed Daily Plan", page_icon="📋")
 
 # Sample structured plan data ----->
 detailed_plan = [

@@ -1,7 +1,7 @@
 import streamlit as st
 
 # Page setup
-st.set_page_config(page_title="Preferences", page_icon="🛠️")
+# st.set_page_config(page_title="Preferences", page_icon="🛠️")
 
 # Check if user is returning
 is_returning = "onboarding_data" in st.session_state
@@ -19,6 +19,8 @@ defaults = st.session_state.get("onboarding_data", {})
 
 # Main Form
 with st.form("onboarding_form"):
+    
+    ## GOAL
     st.markdown("### 🎯 What's your primary goal?")
     goal = st.selectbox(
         "Choose your fitness goal:",
@@ -40,13 +42,15 @@ with st.form("onboarding_form"):
         ].index(defaults.get("goal", "💪 Functional Fitness"))
     )
 
-    st.markdown("### 🏋️ How would you rate your current fitness level?")
-    level = st.selectbox(
-        "Select your level:",
-        ["🌱 Beginner", "🌿 Intermediate", "🌳 Advanced"],
-        index=["🌱 Beginner", "🌿 Intermediate", "🌳 Advanced"].index(defaults.get("level", "🌱 Beginner"))
-    )
+    # st.markdown("### 🏋️ How would you rate your current fitness level?")
+    # level = st.selectbox(
+    #     "Select your level:",
+    #     ["🌱 Beginner", "🌿 Intermediate", "🌳 Advanced"],
+    #     index=["🌱 Beginner", "🌿 Intermediate", "🌳 Advanced"].index(defaults.get("level", "🌱 Beginner"))
+    # )
 
+    ## LIFESTYLE
+    st.markdown("---")
     st.markdown("### 🌟 What best describes your lifestyle?")
     lifestyle = st.selectbox(
         "Choose one:",
@@ -64,23 +68,27 @@ with st.form("onboarding_form"):
         ].index(defaults.get("lifestyle", "🚶 Lightly Active (Some daily movement)"))
     )
 
-    st.markdown("### 🕰️ What time do you prefer to work out?")
-    workout_time = st.selectbox(
-        "Select your preferred workout time:",
-        [
-            "🌅 Morning (6 AM - 9 AM)",
-            "🏙️ Afternoon (12 PM - 3 PM)",
-            "🌆 Evening (5 PM - 8 PM)",
-            "🌙 Night (After 8 PM)",
-        ],
-        index=[
-            "🌅 Morning (6 AM - 9 AM)",
-            "🏙️ Afternoon (12 PM - 3 PM)",
-            "🌆 Evening (5 PM - 8 PM)",
-            "🌙 Night (After 8 PM)",
-        ].index(defaults.get("workout_time", "🌅 Morning (6 AM - 9 AM)"))
+    ## WORKOUT TIMES PREFERENCE 
+    st.markdown("---")
+    st.markdown("### 🕰️ Rank your preferred workout times (most to least preferred)")
+    workout_time_options = [
+        "🌅 Morning (6 AM - 9 AM)",
+        "🏙️ Afternoon (12 PM - 3 PM)",
+        "🌆 Evening (5 PM - 8 PM)",
+        "🌙 Night (After 8 PM)",
+    ]
+    workout_time_pref = st.multiselect(
+        "Select and order your preferences:",
+        options=workout_time_options,
+        default=defaults.get("workout_time_pref", []),
     )
+    st.caption("👆 Select at least 1 option for better personalization.")
+    # # Validate selection
+    # if len(workout_time_pref) < 2:
+    #     st.info("Tip: Select at least 2 for better personalization.")
 
+    ## Extra Notes
+    st.markdown("---")
     notes = st.text_area("📝 Any specific notes or considerations? (optional)", value=defaults.get("notes", ""))
 
     # Submit
@@ -88,9 +96,8 @@ with st.form("onboarding_form"):
     if submitted:
         st.session_state.onboarding_data = {
             "goal": goal,
-            "level": level,
             "lifestyle": lifestyle,
-            "workout_time": workout_time,
+            "workout_time_pref": workout_time_pref,
             "notes": notes,
         }
         st.toast("✅ Preferences saved successfully!")

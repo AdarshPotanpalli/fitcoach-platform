@@ -1,13 +1,16 @@
 import streamlit as st
 import requests
 from frontend.streamlit_app import API_URL
+from frontend import utils
 
 def show_register():
-    st.title("📝 Create an Account")
-
-    st.markdown("Fill in the form below to register.")
+    # st.set_page_config(page_title="Register", page_icon="📝")
+    
 
     with st.form("register", clear_on_submit=True):
+        st.title("📝 Create an Account")
+        st.markdown("Fill in the form below to register.")
+        
         email = st.text_input("Email", placeholder="you@example.com")
         username = st.text_input("Username", placeholder="username")
         password = st.text_input("Password", type="password", placeholder="Create a password")
@@ -43,8 +46,8 @@ def show_register():
                     login_response = requests.post(url = (API_URL+ "/auth/login"), data= login_payload)
                     if login_response.status_code == 200:
                         st.success("User logged in successfully!")
-                        st.session_state.token = login_response.json().get("token")
-                        st.session_state.authenticated = True
+                        token = login_response.json().get("token")
+                        utils.login_user(token) # set the encrypted token cookie
                         st.rerun()
                     else:
                         st.warning("Registration succeeded but login failed. Please log in manually!")

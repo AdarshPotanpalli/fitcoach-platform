@@ -1,3 +1,9 @@
+[global]
+showWarningOnDirectExecution = false
+
+[client]
+showErrorDetails = false
+
 [theme]
 primaryColor = "#00ACC1"            # Keep that vibrant cyan-blue
 backgroundColor = "#121212"         # Deep black stays

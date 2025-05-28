@@ -1,17 +1,22 @@
 import streamlit as st
+from frontend.utils import is_user_authenticated
 
 # backend url
 API_URL = "http://127.0.0.1:8000"
 
-if "token" not in st.session_state:
-    st.session_state.token = "" # default jwt token
+# if "token" not in st.session_state:
+#     st.session_state.token = "" # default jwt token
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False  # Default state
+# if "authenticated" not in st.session_state:
+#     st.session_state.authenticated = False  # Default state
+
+if "login_form_key" not in st.session_state:
+    st.session_state.login_form_key = "login_form"
+
 
 # Conditional pages
 try:
-    if st.session_state.authenticated:
+    if is_user_authenticated():
         pages = {
             "📚 Resources": [
                 st.Page("pages/user_guide.py", title="ℹ️ Getting Started Guide"),

@@ -12,7 +12,7 @@ def headers():
     """displays the page headers
     """
     # page configurations
-    st.set_page_config(page_title="Dashboard", page_icon="📊")
+    # st.set_page_config(page_title="Dashboard", page_icon="📊")
 
     # get the username ------>
     username = "Adarsh"
@@ -148,6 +148,7 @@ def footnote():
 
 if __name__ == "__main__":
     
+    headers()
     # Simulate today's and yesterday's data
     today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)
@@ -160,8 +161,6 @@ if __name__ == "__main__":
         "Workout Minutes": np.random.randint(20, 60, size=7),
     }
     df = pd.DataFrame(progress_data)
-    
-    headers()
     metrics(df)
     graphs(df)
     
