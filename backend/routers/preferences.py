@@ -4,10 +4,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from .. import utils, database, schemas, orm_models, oauth2
 from typing import Annotated, List
 
-router = APIRouter(
-    prefix= "/preferences",
-    tags= ["Preferences"]
-)
 
 router = APIRouter(
     prefix="/preferences",

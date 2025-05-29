@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES : int
     COOKIE_SECRET : str
     COOKIE_PREFIX : str
+    OPENAI_API_KEY : str
 
     class Config:
         env_file = ".env"

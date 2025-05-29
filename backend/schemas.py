@@ -30,3 +30,21 @@ class Preferences(BaseModel):
     
 class PreferencesOut(Preferences):
     owner_email: str
+    
+    class Config:
+        from_attributes = True
+    
+class Plans(BaseModel):
+    task1_title: str = Field(max_length=50)
+    task1_content: str
+    task2_title: str = Field(max_length=50)
+    task2_content: str
+    task3_title: str = Field(max_length=50)
+    task3_content: str
+
+# if the daily task is done or not    
+class Feedback(BaseModel):
+    
+    task1_done: bool
+    task2_done: bool
+    task3_done: bool
