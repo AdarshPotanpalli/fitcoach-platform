@@ -22,6 +22,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login") # api endopoint to get token
 
 def create_access_token(data: dict):
+    """Create a JWT token with passed data and expiration time being encoded."""
+    
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire}) # merges one dictionary to another
@@ -31,6 +33,9 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(database.get_db)):
+    
+    """checks if the passed token is valid.
+    If valid, returns the corresponding user."""
     
     # if the passed token in header is blacklisted (user has logged out)
     blacklisted_token = db.query(orm_models.BlacklistedTokens).filter(orm_models.BlacklistedTokens.token == token).first()

@@ -37,6 +37,7 @@ def show_register():
                 response = requests.post(url= (API_URL + "/auth/register"), json= payload)
                 if response.status_code == 201:
                     st.success("Account registered successfully!")
+                    st.session_state.new_register = True  # Set the new registration state
                     
                     # login the user
                     login_payload = {

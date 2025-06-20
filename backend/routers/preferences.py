@@ -16,6 +16,9 @@ def get_preferences(
     current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
     db: Session = Depends(database.get_db)
 ):
+    """First checks if the user has preferences set,
+    if yes, returns the preferences"""
+    
     user_preferences = db.query(orm_models.Preferences).filter(
         orm_models.Preferences.owner_email == current_user.email
     ).first()
@@ -36,6 +39,9 @@ def create_preferences(
     current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
     db: Session = Depends(database.get_db)
 ):
+    """First checks if the user has preferences set,
+    if not, creates new preferences for the user."""
+    
     # Check if preferences already exist
     existing = db.query(orm_models.Preferences).filter(
         orm_models.Preferences.owner_email == current_user.email

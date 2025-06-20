@@ -12,6 +12,10 @@ router = APIRouter(
 @router.post("/register", status_code= status.HTTP_201_CREATED, response_model = schemas.CreateUserResponse)
 def create_user(user: schemas.CreateUser, db: Session = Depends(database.get_db)):
     
+    """Checks if the user with the given email already exists.
+    If not, it hashes the password and creates a new user in the database.
+    """
+    
     # hashing the password
     hash_password = utils.hash(user.password)
     
@@ -34,6 +38,11 @@ def create_user(user: schemas.CreateUser, db: Session = Depends(database.get_db)
 @router.post("/login")
 def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(database.get_db)):
     
+    """Checks if the user with the given email already exists.
+    If yes, it verifies the password.
+    If the credentials are valid, it generates a JWT token.
+    """
+    
     # check if the user with email id exists
     user_queried = db.query(orm_models.Users).filter(orm_models.Users.email == form_data.username).first()
     if not user_queried:
@@ -52,6 +61,9 @@ def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: S
 async def logout(current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)], 
                  token: str = Depends(oauth2.oauth2_scheme), 
                  db: Session = Depends(database.get_db)):
+    
+    """Checks if the token is already blacklisted.
+    If not, it adds the token to the blacklist"""
     
     # raise exception if the token you want to blacklist is already blacklisted
     existing_token = db.query(orm_models.BlacklistedTokens).filter(orm_models.BlacklistedTokens.token == token).first()
