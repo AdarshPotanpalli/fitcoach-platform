@@ -5,8 +5,59 @@ showWarningOnDirectExecution = false
 showErrorDetails = false
 
 [theme]
-primaryColor = "#00ACC1"            # Keep that vibrant cyan-blue
-backgroundColor = "#121212"         # Deep black stays
-secondaryBackgroundColor = "#263238" # Slightly lighter slate blue-gray for more depth
-textColor = "#CFD8DC"               # A softer, cooler light gray for fresher feel
-font = "sans-serif"
+
+# Inherit from Streamlit's light base theme
+base = "light"
+
+# Elegant and modern accent color (teal green)
+primaryColor = "#00796B"
+
+# Clean, soft background
+backgroundColor = "#FAFAFA"
+
+# Subtle contrast for widgets
+secondaryBackgroundColor = "#E0F2F1"
+
+# Crisp, dark text
+textColor = "#212121"
+
+# Accent link color matching primary
+linkColor = "#00796B"
+
+# Gentle background for code blocks
+codeBackgroundColor = "#F3F3F3"
+
+# Classy, modern serif font
+font = "Playfair Display, serif"
+
+# Monospace font for code (matches well with serif headers)
+codeFont = "monospace"
+
+# Slightly larger code size for readability
+codeFontSize = "0.95rem"
+
+# Use same elegant serif font for headings
+headingFont = "Playfair Display, serif"
+
+# Custom Google Font setup (if serving or injecting separately)
+[[theme.fontFaces]]
+family = "Playfair Display"
+url = "https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap"
+
+# Medium-rounded corners for elegance
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+
+# Light border tone for UI clarity
+borderColor = "#DADADA"
+dataframeBorderColor = "#DADADA"
+
+# Clean look with subtle borders around widgets
+showWidgetBorder = true
+
+# Slightly larger font base
+baseFontSize = 17
+
+# Hide sidebar separator for a seamless look
+showSidebarBorder = false
+

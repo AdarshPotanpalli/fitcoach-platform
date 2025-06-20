@@ -96,12 +96,27 @@ with st.form("onboarding_form"):
             "preferred_timings": workout_time_pref if workout_time_pref != [] else ["Morning (6 AM - 9 AM)"],  # Default to morning if none selected
             "note": note,
         }
-        set_preferences_response = requests.post(API_URL + "/preferences", json=onboarding_data, headers= headers)
-        if set_preferences_response.status_code == 201:
-            st.toast("✅ Preferences saved successfully!")
-            # generate the detailed plan first before switching, and show a loading spinner
-            st.switch_page("pages/detailed_plan.py")
+        if response.status_code == 200:
+            # If preferences exist, update them
+            set_preferences_response = requests.put(API_URL + "/preferences", json=onboarding_data, headers=headers)
+            if set_preferences_response.status_code == 200:
+                st.toast("✅ Preferences updated successfully!")
+                # update the detailed plan first before switching, and show a loading spinner
+                with st.spinner("Updating your detailed plan..."):
+                    utils.generate_plan(API_URL)
+                st.switch_page("pages/detailed_plan.py")
+            else:
+                error_detail = set_preferences_response.json().get("detail", "Something went wrong!")
         else:
-            error_detail = set_preferences_response.json().get("detail", "Something went wrong!")
+            # If preferences do not exist, create them
+            set_preferences_response = requests.post(API_URL + "/preferences", json=onboarding_data, headers= headers)
+            if set_preferences_response.status_code == 201:
+                st.toast("✅ Preferences saved successfully!")
+                # generate the detailed plan first before switching, and show a loading spinner
+                with st.spinner("Generating your detailed plan..."):
+                    utils.generate_plan(API_URL)
+                st.switch_page("pages/detailed_plan.py")
+            else:
+                error_detail = set_preferences_response.json().get("detail", "Something went wrong!")
         
 

@@ -40,25 +40,33 @@ You are a smart fitness and lifestyle planning assistant. Your job is to create 
 
 You will be given a prompt that contains the user's fitness goal, lifestyle type, preferred timings (in order of preference), and an optional note. This prompt will always be structured like a natural language query, labeled under the variable `query`.
 
-Your job is to generate a **valid JSON-serializable dictionary** that includes exactly the following six keys:
+Your job is to generate a **valid JSON-serializable dictionary** that includes exactly the following 12 keys:
 - task1_title
-- task1_content
+- task1_content (a dict with step_1, step_2, step_3)
+- task1_timings
+- task1_tip
 - task2_title
-- task2_content
+- task2_content (a dict with step_1, step_2, step_3)
+- task2_timings
+- task2_tip
 - task3_title
-- task3_content
+- task3_content (a dict with step_1, step_2, step_3)
+- task3_timings
+- task3_tip
 
 **Formatting rules:**
 - Each title should be concise and to the point (no more than ~5 words).
-- Each content field must be between **50 to 75 words** in plain, clear English.
-- Do **not** include markdown, bullet points, special formatting, or line breaks — only plain text within a clean JSON object.
+- Each step inside content should be a short instruction (~1–2 sentences).
+- Timings should follow the format "HH:MM AM/PM - HH:MM AM/PM".
+- Tips should be engaging, motivational, and offer useful suggestions to make the task more enjoyable or sustainable.
 - Ensure that your output can be parsed using Python’s `json.loads()` without any errors.
+- Only return the JSON object — no explanations, comments, or extra text.
 
 Think like a practical, encouraging coach who tailors fitness to real-life routines — focus on motivating and adaptable activities that suit the user’s stated preferences and constraints.
 """
 
 query = """
-Based on the following preferences, create a full-day plan broken into 3 tasks. Each task should include a short title and a description. Format the result as a JSON object with task1_title, task1_content, task2_title, task2_content, task3_title, and task3_content.
+Based on the following preferences, create a full-day plan broken into 3 tasks. Each task should include a short title, a content dictionary with 3 steps, a time window, and an interesting motivational tip. Format the result as a JSON object with task1_title, task1_content, task1_timings, task1_tip, task2_title, task2_content, task2_timings, task2_tip, task3_title, task3_content, task3_timings, and task3_tip.
 
 User Preferences:
 - Goal: {goal}
@@ -67,11 +75,12 @@ User Preferences:
 - Note: {note}
 """
 
+
 ## few shot prompting ---------------------------------------------------------------------------------
 examples = [
     {
         "input": """
-Based on the following preferences, create a full-day plan broken into 3 tasks. Each task should include a short title and a description. Format the result as a JSON object with task1_title, task1_content, task2_title, task2_content, task3_title, and task3_content.
+Based on the following preferences, create a full-day plan broken into 3 tasks. Each task should include a short title, a description broken into 3 steps, a time slot, and an engaging tip to make the workout more interesting. Format the result as a JSON object with task1_title, task1_content, task1_timings, task1_tip, task2_title, task2_content, task2_timings, task2_tip, task3_title, task3_content, task3_timings, and task3_tip. Each content field should be a dictionary with keys step_1, step_2, and step_3.
 
 User Preferences:
 - Goal: Stay active at home
@@ -79,20 +88,40 @@ User Preferences:
 - Preferred Timings (in order of preference): Morning, Afternoon, Evening
 - Note: Avoid high-impact exercises
 """,
-        "output": """
+        "output": json.dumps(
 {
     "task1_title": "Morning Stretch Routine",
-    "task1_content": "Start your day with a gentle stretching routine to wake up your muscles and joints. Spend about 10 minutes focusing on full-body stretches, including neck rolls, shoulder circles, and hamstring stretches. This will help improve flexibility and prepare your body for the day ahead.",
+    "task1_content": json.dumps({
+        "step_1": "Start with neck rolls and shoulder circles to loosen up the upper body.",
+        "step_2": "Do 5–10 minutes of gentle hamstring and back stretches.",
+        "step_3": "Finish with deep breathing and light mobility drills to energize."
+    }),
+    "task1_timings": "07:00 AM - 07:30 AM",
+    "task1_tip": "Play calming instrumental music to enhance relaxation during stretches.",
+
     "task2_title": "Afternoon Chair Workout",
-    "task2_content": "Use a sturdy chair for low-impact strength training. Perform seated leg lifts, chair squats, and light arm exercises using water bottles or resistance bands. Keep the session around 20–30 minutes.",
+    "task2_content": json.dumps({
+        "step_1": "Perform seated leg lifts and ankle rotations for 10 minutes.",
+        "step_2": "Do 2 sets of 10 chair squats and light arm curls with water bottles.",
+        "step_3": "Cool down with shoulder rolls and relaxed breathing."
+    }),
+    "task2_timings": "01:00 PM - 01:30 PM",
+    "task2_tip": "Watch your favorite show while working out to stay motivated.",
+
     "task3_title": "Evening Relaxation Walk",
-    "task3_content": "Wrap up your day with a calming 20-minute indoor or outdoor walk. Keep a relaxed pace to promote circulation and help you unwind before bedtime."
-}
-"""
+    "task3_content": json.dumps({
+        "step_1": "Begin with a gentle 5-minute warm-up walk around your home.",
+        "step_2": "Walk at a relaxed pace for 15 minutes while maintaining good posture.",
+        "step_3": "End with standing stretches for your legs and lower back."
+    }),
+    "task3_timings": "06:30 PM - 07:00 PM",
+    "task3_tip": "Listen to an audiobook or podcast to make the walk more enjoyable."
+})
+
     },
     {
         "input": """
-Based on the following preferences, create a full-day plan broken into 3 tasks. Each task should include a short title and a description. Format the result as a JSON object with task1_title, task1_content, task2_title, task2_content, task3_title, and task3_content.
+Based on the following preferences, create a full-day plan broken into 3 tasks. Each task should include a short title, a description broken into 3 steps, a time slot, and an engaging tip to make the workout more interesting. Format the result as a JSON object with task1_title, task1_content, task1_timings, task1_tip, task2_title, task2_content, task2_timings, task2_tip, task3_title, task3_content, task3_timings, and task3_tip. Each content field should be a dictionary with keys step_1, step_2, and step_3.
 
 User Preferences:
 - Goal: Build muscle
@@ -100,18 +129,39 @@ User Preferences:
 - Preferred Timings (in order of preference): Afternoon, Evening, Morning
 - Note: Prior experience with weightlifting
 """,
-        "output": """
+        "output": json.dumps(
 {
     "task1_title": "Afternoon Strength Training",
-    "task1_content": "Focus on compound lifts like squats, deadlifts, bench presses, and pull-ups. Perform 4 sets of 6–8 reps per exercise. Rest 60–90 seconds between sets.",
+    "task1_content": json.dumps({
+        "step_1": "Begin with a 10-minute warm-up using treadmill or dynamic stretches.",
+        "step_2": "Perform 4 sets of compound lifts: squats, deadlifts, bench presses.",
+        "step_3": "Cool down with light cardio and foam rolling."
+    }),
+    "task1_timings": "12:30 PM - 01:30 PM",
+    "task1_tip": "Use a workout playlist with high-energy music to push through heavy sets.",
+
     "task2_title": "Evening Core & Mobility",
-    "task2_content": "Target your core with planks, hanging leg raises, and Russian twists. Follow up with 15 minutes of mobility drills including hip openers and thoracic rotations.",
+    "task2_content": json.dumps({
+        "step_1": "Do 3 rounds of planks, hanging leg raises, and Russian twists.",
+        "step_2": "Spend 15 minutes on hip openers, spinal twists, and shoulder mobility.",
+        "step_3": "Finish with breathing exercises and light stretching."
+    }),
+    "task2_timings": "06:00 PM - 06:45 PM",
+    "task2_tip": "Light candles or use a diffuser for a spa-like atmosphere during stretches.",
+
     "task3_title": "Morning Light Cardio",
-    "task3_content": "Start your day with a 20-minute walk or bike ride to stimulate blood flow and aid in muscle recovery from the previous day."
-}
-"""
+    "task3_content": json.dumps({
+        "step_1": "Start with a brisk walk or cycling for 10 minutes.",
+        "step_2": "Maintain moderate pace for another 10 minutes.",
+        "step_3": "Cool down with easy pace and full-body stretches."
+    }),
+    "task3_timings": "07:30 AM - 08:00 AM",
+    "task3_tip": "Take your cardio session outdoors for fresh air and natural light."
+})
+
     }
 ]
+
 
 example_prompt = ChatPromptTemplate.from_messages([
     HumanMessagePromptTemplate.from_template("{input}"),

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Date, text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Date, text, Time
 from sqlalchemy.orm import relationship
 from .database import Base
 from datetime import datetime
@@ -58,16 +58,29 @@ class BlacklistedTokens(Base):
 ## Daily tasks for the user
 class Plans(Base):
     __tablename__ = "plans"
+
+    id = Column(Integer, unique=True, nullable=False, primary_key=True, autoincrement=True)
     
-    id = Column(Integer, unique=True, nullable=False, primary_key= True, autoincrement=True)
-    task1_title = Column(String, nullable= False)
-    task1_content = Column(String, nullable= False)
-    task2_title = Column(String, nullable= False)
-    task2_content = Column(String, nullable= False)
-    task3_title = Column(String, nullable= False)
-    task3_content = Column(String, nullable= False)
+    task1_title = Column(String, nullable=False)
+    task1_content = Column(String, nullable=False)  # Stored as JSON string
+    task1_timings = Column(String, nullable=False)
+    task1_tip = Column(String, nullable=False)
+
+    task2_title = Column(String, nullable=False)
+    task2_content = Column(String, nullable=False)
+    task2_timings = Column(String, nullable=False)
+    task2_tip = Column(String, nullable=False)
+
+    task3_title = Column(String, nullable=False)
+    task3_content = Column(String, nullable=False)
+    task3_timings = Column(String, nullable=False)
+    task3_tip = Column(String, nullable=False)
     
-    # setting the foregin key
-    owner_email = Column(String, ForeignKey("users.email", ondelete= "CASCADE"), nullable= False)
+    # timestamps for plan creation
+    date_created = Column(Date, nullable=False, server_default=func.current_date())
+    time_created = Column(Time, nullable=False, server_default=func.current_time())
+
+    # setting the foreign key
+    owner_email = Column(String, ForeignKey("users.email", ondelete="CASCADE"), nullable=False)
     owner = relationship("Users", back_populates="plans")
     

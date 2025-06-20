@@ -3,20 +3,23 @@ from fastapi import FastAPI, APIRouter, status, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from .. import utils, database, schemas, orm_models, oauth2
 from typing import Annotated, List
-from datetime import date
+from datetime import date, datetime
+import json
 
 
 router = APIRouter(
     prefix="/plans",
     tags=["Plans"]
 )
-
+# one user can have only one plan
 ## GET PLAN ------------------------
 @router.get("", response_model=schemas.Plans, status_code= status.HTTP_200_OK)
 def get_plan(
     current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
     db: Session = Depends(database.get_db)
 ):
+    """Gets the user's plan if it exists."""
+    
     user_plans = db.query(orm_models.Plans).filter(orm_models.Plans.owner_email == current_user.email).first()
     if not user_plans:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail=f"The plans for {current_user.username} not found!")
@@ -29,6 +32,7 @@ def create_plan(
     current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
     db: Session = Depends(database.get_db)
 ):
+    """Generates a new plan for the user of the preferences exists and there is no existing plan."""
     # Check if user has preferences
     preferences = db.query(orm_models.Preferences).filter(orm_models.Preferences.owner_email == current_user.email).first()
 
@@ -48,6 +52,10 @@ def create_plan(
 
     # Generate plan using preferences
     generated_plan = utils.get_todays_plan(preferences)
+    # Convert task content to JSON strings
+    generated_plan["task1_content"] = json.dumps(generated_plan["task1_content"])
+    generated_plan["task2_content"] = json.dumps(generated_plan["task2_content"])
+    generated_plan["task3_content"] = json.dumps(generated_plan["task3_content"])
     
     # Validate the plan
     try:
@@ -57,7 +65,6 @@ def create_plan(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Generated plan validation failed: {str(e)}"
         )
-
     # Create and save plan
     new_plan = orm_models.Plans(
         **validated_plan.dict(),
@@ -69,11 +76,12 @@ def create_plan(
     return new_plan
 
 ## UPDATE PLAN ---------------------------
-@router.put("", response_model=schemas.Plans)
+@router.put("", response_model=schemas.Plans, status_code=status.HTTP_200_OK)
 def update_plan(
     current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
     db: Session = Depends(database.get_db)
 ):
+    """Updates the user's plan if the preferences and the plan already exists."""
     
     # Check if user has preferences
     preferences = db.query(orm_models.Preferences).filter(orm_models.Preferences.owner_email == current_user.email).first()
@@ -90,9 +98,19 @@ def update_plan(
             status_code=404, 
             detail="No plan found to update."
         )
-
+    # adding the hard constraint to the preferred timings    
+    preferred_timings_list = preferences.preferred_timings
+    preferred_timings_list.insert(0, f"Hard constraint (even if the next elements in this list conflicts with this constraint, you must obey hard this constraint) : The suggested plan must take place after {datetime.now().strftime("%H hrs %M mins")}")
+    preferences.preferred_timings = preferred_timings_list
+    
+    print(preferences.preferred_timings)
+    
     # Generate plan using preferences
     generated_plan = utils.get_todays_plan(preferences)
+    # Convert task content to JSON strings
+    generated_plan["task1_content"] = json.dumps(generated_plan["task1_content"])
+    generated_plan["task2_content"] = json.dumps(generated_plan["task2_content"])
+    generated_plan["task3_content"] = json.dumps(generated_plan["task3_content"])
     
     # Validate the plan
     try:

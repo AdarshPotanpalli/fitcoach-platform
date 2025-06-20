@@ -73,6 +73,9 @@ def update_preferences(
     current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
     db: Session = Depends(database.get_db)
 ):
+    """First checks if the user has preferences set,
+    if yes, updates the existing preferences for the user."""
+    
     user_preferences_query = db.query(orm_models.Preferences).filter(
         orm_models.Preferences.owner_email == current_user.email
     )

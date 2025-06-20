@@ -30,3 +30,26 @@ def get_token():
     return cookies.get("access_token")
 
 
+def generate_plan(API_URL: str):
+    
+    """Checks if the user already has a plan,
+    if yes, update the plan,
+    if not, create a new plan"""
+    # check if the user has a plan already in db
+    headers = {
+        "Authorization": f"Bearer {get_token()}"
+    }
+    response = requests.get(API_URL+ "/plans", headers = headers)
+    if response.status_code == 200:
+        # if plan already exists, update the plan
+        put_response = requests.put(API_URL + "/plans", headers=headers)
+
+        if put_response.status_code !=200:
+            st.error(put_response.json().get("detail", "Error updating plan."))
+            
+    elif response.status_code == 404:
+        # if plan does not exist, create a new plan
+        post_response = requests.post(API_URL + "/plans", headers=headers)
+        
+        if post_response.status_code != 201:
+            st.error(post_response.json().get("detail", "Error creating plan."))

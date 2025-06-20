@@ -51,3 +51,7 @@ for i, activity in enumerate(detailed_plan):
         
         # Completion checkbox
         st.checkbox(f"✅ Mark '{activity['title']}' as done", key=f"done_{i}")
+
+# a button to swith to the dashboard page
+if st.button("🔙 Back to Dashboard"):
+    st.switch_page("pages/dashboard.py")
