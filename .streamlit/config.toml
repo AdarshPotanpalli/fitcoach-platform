@@ -28,7 +28,7 @@ linkColor = "#00796B"
 codeBackgroundColor = "#F3F3F3"
 
 # Classy, modern serif font
-font = "Playfair Display, serif"
+font = "serif"
 
 # Monospace font for code (matches well with serif headers)
 codeFont = "monospace"
@@ -37,16 +37,7 @@ codeFont = "monospace"
 codeFontSize = "0.95rem"
 
 # Use same elegant serif font for headings
-headingFont = "Playfair Display, serif"
-
-# Custom Google Font setup (if serving or injecting separately)
-[[theme.fontFaces]]
-family = "Playfair Display"
-url = "https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap"
-
-# Medium-rounded corners for elegance
-baseRadius = "0.5rem"
-buttonRadius = "0.5rem"
+headingFont = "serif"
 
 # Light border tone for UI clarity
 borderColor = "#DADADA"
