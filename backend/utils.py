@@ -2,11 +2,17 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import (ChatPromptTemplate, 
                                     HumanMessagePromptTemplate, 
                                     SystemMessagePromptTemplate,
+                                    MessagesPlaceholder,
                                     FewShotChatMessagePromptTemplate,
                                     AIMessagePromptTemplate)
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain.callbacks.base import AsyncCallbackHandler
+from langchain.schema import LLMResult
 from backend.config import settings
 from backend import schemas
 import json
+import asyncio
 
 ## hasing and varifying passwords ---------------------------------------------------
 from passlib.context import CryptContext
@@ -203,3 +209,93 @@ def get_todays_plan(preferences: schemas.Preferences):
     ai_message = pipeline.invoke(preferences_dict)
     # print("Raw LLM response:", ai_message.content)
     return json.loads(ai_message.content)
+
+
+## -------------------------------------------------------------------- LLM agent for chat bot --------------------------
+
+llm = ChatOpenAI(
+        model="gpt-4o",
+        temperature=0.8,
+        max_tokens=None,
+        timeout=None,
+        max_retries=2,
+        api_key= settings.OPENAI_API_KEY  # if you prefer to pass api key in directly instaed of using env vars
+        # base_url="...",
+        # organization="...",
+        # other params...
+    )
+
+# System prompt
+system_prompt_chatbot = """
+You are a smart fitness and lifestyle planning assistant. 
+Your job is to provide helpful, engaging, and personalized responses to user queries about health, fitness, nutrition and lifestyle planning.
+Keep your response concise and to the point always.
+
+Extra information (optional):
+{user_plans}
+"""
+# chat prompt template
+chat_prompt_chatbot = ChatPromptTemplate.from_messages([
+    SystemMessagePromptTemplate.from_template(system_prompt_chatbot),
+    MessagesPlaceholder(variable_name="chat_history"),
+    HumanMessagePromptTemplate.from_template("{user_query}"),
+])
+
+# define get chat history
+chat_map = {}
+def get_chat_history(user_id: str):
+    """Retrieves the chat history for a given user."""
+    if user_id not in chat_map:
+        chat_map[user_id] = InMemoryChatMessageHistory()
+    return chat_map[user_id]
+
+# pipeline wrapped with runnables with message history
+pipeline_chatbot = chat_prompt_chatbot | llm
+pipeline_with_history = RunnableWithMessageHistory(
+    pipeline_chatbot,
+    get_session_history= get_chat_history,
+    input_messages_key="user_query",
+    history_messages_key="chat_history"
+)
+
+## custom callback handler
+class TokenStreamHandler(AsyncCallbackHandler):
+    def __init__(self):
+        # Initialize an asyncio queue to hold the streamed tokens
+        self.queue = asyncio.Queue()
+
+    async def on_llm_new_token(self, token: str, **kwargs):
+        # This callback is triggered every time the LLM emits a new token
+        # Add the token to the queue for streaming
+        await self.queue.put(token)
+
+    async def on_llm_end(self, response: LLMResult, **kwargs):
+        # This callback is triggered when the LLM finishes generating a response
+        # Put a sentinel value (None) in the queue to indicate the end of stream
+        await self.queue.put(None)
+
+    async def __aiter__(self):
+        # Asynchronous generator to yield tokens one by one from the queue
+        while True:
+            token = await self.queue.get()  # Wait for next token
+            if token is None:
+                break  # End of stream
+            yield token  # Yield the token for downstream use (e.g., FastAPI StreamingResponse)
+
+handler = TokenStreamHandler()
+
+async def get_chatbot_response(user_query: str, user_id:str, user_plans: str = None ):
+    """Generates a response from the AI chatbot based on user input."""
+    
+    # ai_message = pipeline_with_history.invoke(
+    #     {"user_plans": user_plans, "user_query": user_query}, 
+    #     config = {"session_id": user_id}
+    #     )
+    
+    async for chunk in pipeline_with_history.astream(
+        {"user_plans": user_plans, "user_query": user_query}, 
+        config = {"session_id": user_id}
+    ):
+        yield chunk.content
+    
+    # return ai_message.content
