@@ -5,6 +5,7 @@ from frontend import utils
 import json
 
 # st.set_page_config(page_title="Detailed Daily Plan", page_icon="📋")
+st.title("📋 Detailed Daily Plan")
 
 # if detailed plan exists in the database, then fetch it, if not, tell the user to go to preferences page and set preferences first
 headers = {
@@ -22,8 +23,8 @@ else:
     detailed_plan["task1_content"] = json.loads(detailed_plan["task1_content"])
     detailed_plan["task2_content"] = json.loads(detailed_plan["task2_content"])
     detailed_plan["task3_content"] = json.loads(detailed_plan["task3_content"])
-    
-    st.title("📋 Detailed Daily Plan")
+
+    # Parsing the plans data for the detailed view
     with st.expander(f"🧩 {detailed_plan["task1_title"]}", expanded=False):
         st.markdown(f"<div style='text-align: right;'> Time: <code>{detailed_plan.get('task1_timings', 'N/A')}</code></div>", unsafe_allow_html=True)
         st.markdown("**🪜 Steps:**")
@@ -48,6 +49,23 @@ else:
         st.success(f"**💡 Tip:** _{detailed_plan['task3_tip']}_")
         st.checkbox(f"✅ Mark '{detailed_plan['task3_title']}' as done", key="done_task3")
 
-st.markdown("---")
-if st.button("Update Preferences"):
-    st.switch_page("pages/onboarding_form.py")
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+    
+    # Action buttons for generating a new plan, updating preferences, and asking AI Coach
+    with col1:
+        st.markdown("Need a new plan?")
+        if st.button("Generate New Plan"):
+            with st.spinner("Generating new plan..."):
+                utils.generate_plan(API_URL)
+                st.success("New plan generated successfully!")
+                st.rerun()
+    with col2:
+        st.markdown("Want to update your preferences?")
+        if st.button("Update Preferences"):
+            st.switch_page("pages/onboarding_form.py")
+            
+    with col3:
+        st.markdown("Any doubts? Ask your AI Coach!")
+        if st.button("Ask AI Coach"):
+            st.switch_page("pages/ai_coach.py")

@@ -227,19 +227,31 @@ llm = ChatOpenAI(
 
 # System prompt
 system_prompt_chatbot = """
-You are a smart fitness and lifestyle planning assistant. 
-Your job is to provide helpful, engaging, and personalized responses to user queries about health, fitness, nutrition and lifestyle planning.
-Keep your response concise and to the point always.
+- You are a smart fitness and lifestyle planning assistant. 
+- Your job is to provide responses to user queries about health, fitness, nutrition and lifestyle planning.
+- Respond with engaging, well-structured markdown using appropriate emojis, headings, bold text, and bullet points(when appropriate) to make the content visually appealing and reader-friendly.
+- Keep your response concise and to the point always.
 
-Extra information (optional):
-{user_plans}
+Goal of the user:
+{goal}
+
+User plans (if the user asks any questions related to their plans,use the following information to answer):
+- Task 1: {user_task1}
+- Task 2: {user_task2}
+- Task 3: {user_task3}
 """
+user_query_chatbot = """
+{user_query}
+
+"""
+
 # chat prompt template
-chat_prompt_chatbot = ChatPromptTemplate.from_messages([
-    SystemMessagePromptTemplate.from_template(system_prompt_chatbot),
+chat_prompt_chatbot = ChatPromptTemplate(
+    [SystemMessagePromptTemplate.from_template(system_prompt_chatbot),
     MessagesPlaceholder(variable_name="chat_history"),
-    HumanMessagePromptTemplate.from_template("{user_query}"),
-])
+    HumanMessagePromptTemplate.from_template(user_query_chatbot),],
+    input_variables=["user_task1", "user_task2", "user_task3", "user_query", "goal"],
+    )
 
 # define get chat history
 chat_map = {}
@@ -279,23 +291,22 @@ class TokenStreamHandler(AsyncCallbackHandler):
         while True:
             token = await self.queue.get()  # Wait for next token
             if token is None:
-                break  # End of stream
+                return  # End of stream
             yield token  # Yield the token for downstream use (e.g., FastAPI StreamingResponse)
+            await asyncio.sleep(0.01) # add tiny delay to have a streaming behaviour
 
-handler = TokenStreamHandler()
-
-async def get_chatbot_response(user_query: str, user_id:str, user_plans: str = None ):
+handler = TokenStreamHandler()    
+async def get_chatbot_response(user_query: str, 
+                               user_id:str, 
+                               user_task1: str = None,
+                               user_task2: str = None, 
+                               user_task3: str = None,
+                               goal: str = None):
     """Generates a response from the AI chatbot based on user input."""
     
-    # ai_message = pipeline_with_history.invoke(
-    #     {"user_plans": user_plans, "user_query": user_query}, 
-    #     config = {"session_id": user_id}
-    #     )
-    
     async for chunk in pipeline_with_history.astream(
-        {"user_plans": user_plans, "user_query": user_query}, 
-        config = {"session_id": user_id}
+        {"user_task1": user_task1, "user_task2": user_task2, "user_task3": user_task3, 
+         "user_query": user_query, "goal": goal}, 
+        config = {"session_id": user_id, "callbacks": [handler]}
     ):
         yield chunk.content
-    
-    # return ai_message.content
