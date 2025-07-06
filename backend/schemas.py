@@ -37,17 +37,20 @@ class PreferencesOut(Preferences):
 class Plans(BaseModel):
     task1_title: str = Field(max_length=50)
     task1_content: str #JSON string with steps
-    task1_timings: str
+    task1_timings_start: str
+    task1_timings_end: str
     task1_tip: str
 
     task2_title: str = Field(max_length=50)
     task2_content: str
-    task2_timings: str
+    task2_timings_start: str
+    task2_timings_end: str
     task2_tip: str
 
     task3_title: str = Field(max_length=50)
     task3_content: str
-    task3_timings: str
+    task3_timings_start: str
+    task3_timings_end: str
     task3_tip: str
 
 # if the daily task is done or not    

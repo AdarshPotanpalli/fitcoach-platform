@@ -32,6 +32,18 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
+def verify_access_token(token:str, credentials_exception):
+    """This function is used to verify the access token."""
+    payload = jwt.decode(token = token, key = SECRET_KEY, algorithms=[ALGORITHM])
+    email = payload.get("email") # get the payload
+    if email is None:
+        raise credentials_exception
+    token_data = schemas.TokenData(email= email) # schema validation
+    return token_data
+    
+
+
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(database.get_db)):
     
     """checks if the passed token is valid.
@@ -54,11 +66,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
     
     try:
         # decode the token
-        payload = jwt.decode(token = token, key = SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("email") # get the payload
-        if email is None:
-            raise credentials_exception
-        token_data = schemas.TokenData(email= email) # schema validation
+        token_data = verify_access_token(token, credentials_exception) # this will raise exception if token is invalid
     except InvalidTokenError:
         raise credentials_exception
     

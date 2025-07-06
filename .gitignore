@@ -2,3 +2,6 @@
 __pycache__/
 ai_coach_venv/
 backend/experiment.ipynb
+backend/google_client_secret.json
+alembic/
+alembic.ini

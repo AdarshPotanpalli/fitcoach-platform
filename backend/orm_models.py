@@ -63,17 +63,20 @@ class Plans(Base):
     
     task1_title = Column(String, nullable=False)
     task1_content = Column(String, nullable=False)  # Stored as JSON string
-    task1_timings = Column(String, nullable=False)
+    task1_timings_start = Column(String, nullable=False)
+    task1_timings_end = Column(String, nullable=False)
     task1_tip = Column(String, nullable=False)
 
     task2_title = Column(String, nullable=False)
     task2_content = Column(String, nullable=False)
-    task2_timings = Column(String, nullable=False)
+    task2_timings_start = Column(String, nullable=False)
+    task2_timings_end = Column(String, nullable=False)
     task2_tip = Column(String, nullable=False)
 
     task3_title = Column(String, nullable=False)
     task3_content = Column(String, nullable=False)
-    task3_timings = Column(String, nullable=False)
+    task3_timings_start = Column(String, nullable=False)
+    task3_timings_end = Column(String, nullable=False)
     task3_tip = Column(String, nullable=False)
     
     # timestamps for plan creation

@@ -26,7 +26,7 @@ else:
 
     # Parsing the plans data for the detailed view
     with st.expander(f"🧩 {detailed_plan["task1_title"]}", expanded=False):
-        st.markdown(f"<div style='text-align: right;'> Time: <code>{detailed_plan.get('task1_timings', 'N/A')}</code></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: right;'> Time: <code>{detailed_plan.get('task1_timings_start', 'N/A')} - {detailed_plan.get('task1_timings_end', 'N/A')}</code></div>", unsafe_allow_html=True)
         st.markdown("**🪜 Steps:**")
         for step, task in detailed_plan["task1_content"].items():
             st.markdown(f"- {task}")
@@ -34,7 +34,7 @@ else:
         st.checkbox(f"✅ Mark '{detailed_plan['task1_title']}' as done", key="done_task1")
     
     with st.expander(f"🧩 {detailed_plan['task2_title']}", expanded=False):
-        st.markdown(f"<div style='text-align: right;'> Time: <code>{detailed_plan.get('task2_timings', 'N/A')}</code></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: right;'> Time: <code>{detailed_plan.get('task2_timings_start', 'N/A')} - {detailed_plan.get('task2_timings_end', 'N/A')}</code></div>", unsafe_allow_html=True)
         st.markdown("**🪜 Steps:**")
         for step, task in detailed_plan["task2_content"].items():
             st.markdown(f"- {task}")
@@ -42,7 +42,7 @@ else:
         st.checkbox(f"✅ Mark '{detailed_plan['task2_title']}' as done", key="done_task2")
         
     with st.expander(f"🧩 {detailed_plan['task3_title']}", expanded=False):
-        st.markdown(f"<div style='text-align: right;'> Time: <code>{detailed_plan.get('task3_timings', 'N/A')}</code></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: right;'> Time: <code>{detailed_plan.get('task2_timings_start', 'N/A')} - {detailed_plan.get('task2_timings_end', 'N/A')}</code></div>", unsafe_allow_html=True)
         st.markdown("**🪜 Steps:**")
         for step, task in detailed_plan["task3_content"].items():
             st.markdown(f"- {task}")

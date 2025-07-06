@@ -1,5 +1,5 @@
 from fastapi import FastAPI, status, HTTPException, Depends
-from .routers import auth, preferences, plans, coach
+from .routers import auth, preferences, plans, coach, calendar
 from . import orm_models, database, schemas, oauth2
 from typing import Annotated, List
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ app.include_router(auth.router)
 app.include_router(preferences.router)
 app.include_router(plans.router)
 app.include_router(coach.router)
+app.include_router(calendar.router)
 
 # app route to get the current user
 @app.get("/me", response_model=schemas.CreateUserResponse, status_code=status.HTTP_200_OK)

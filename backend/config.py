@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     COOKIE_SECRET : str
     COOKIE_PREFIX : str
     OPENAI_API_KEY : str
+    GOOGLE_REDIRECT_URI: str
+    FRONTEND_URL: str
 
     class Config:
         env_file = ".env"

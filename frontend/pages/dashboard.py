@@ -5,7 +5,9 @@ import numpy as np
 import plotly.express as px
 import streamlit as st
 import plotly.graph_objects as go
-
+import requests
+from frontend.streamlit_app import API_URL
+from frontend import utils
 
 
 def headers(): 
@@ -146,9 +148,46 @@ def footnote():
     ## get a new quote per day -----> 
     st.info("💡 *“Discipline is the bridge between goals and accomplishment.” – Jim Rohn*")
 
+@st.dialog("Sync with Google Calendar")
+def sync_redirect(auth_url:str):
+    st.write("Do you want to sync your workout plan with Google Calendar?")
+    if st.link_button("Sync Now", url = auth_url):
+        st.toast("🔄 Redirecting to Google Calendar sync...")
+
+def sync_calendar():
+    """ Function to sync with Google Calendar """
+    # Google Calendar Sync
+    col1, col2 = st.columns([3, 1])  # adjust ratio as needed # right aligned
+
+    with col2:
+        sync = st.button("Sync Calendar", key="calendar_sync")
+
+    # jwt token headers
+    headers = {
+        "Authorization": f"Bearer {utils.get_token()}"
+    }
+    
+    # if sync is pressed, display the sync url   
+    if sync:
+        # st.success("Click below to authorize Google Calendar sync:")
+        try:
+            response = requests.get(API_URL + "/calendar/sync/start", headers=headers)
+            if response.status_code == 307:
+                auth_url = response.json().get("auth_url")
+                if auth_url:
+                    sync_redirect(auth_url= auth_url)
+            elif response.status_code == 404:
+                st.toast(response.json().get("detail", "Plans not found!"))
+            else:
+                st.toast("Failed to initiate calendar sync.")
+        except Exception as e:
+            st.error(f"Error: {e}")
+
 if __name__ == "__main__":
     
     headers()
+    sync_calendar()
+    
     # Simulate today's and yesterday's data
     today = datetime.date.today()
     yesterday = today - datetime.timedelta(days=1)

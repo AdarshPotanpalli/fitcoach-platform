@@ -49,21 +49,24 @@ You will be given a prompt that contains the user's fitness goal, lifestyle type
 Your job is to generate a **valid JSON-serializable dictionary** that includes exactly the following 12 keys:
 - task1_title
 - task1_content (a dict with step_1, step_2, step_3)
-- task1_timings
+- task1_timings_start (in the format "HH:MM:SS")
+- task1_timings_end (in the format "HH:MM:SS")
 - task1_tip
 - task2_title
 - task2_content (a dict with step_1, step_2, step_3)
-- task2_timings
+- task2_timings_start (in the format "HH:MM:SS")
+- task2_timings_end (in the format "HH:MM:SS")
 - task2_tip
 - task3_title
 - task3_content (a dict with step_1, step_2, step_3)
-- task3_timings
+- task3_timings_start (in the format "HH:MM:SS")
+- task3_timings_end (in the format "HH:MM:SS")
 - task3_tip
 
 **Formatting rules:**
 - Each title should be concise and to the point (no more than ~5 words).
 - Each step inside content should be a short instruction (~1–2 sentences).
-- Timings should follow the format "HH:MM AM/PM - HH:MM AM/PM".
+- Timings should follow the format "HH:MM:SS".
 - Tips should be engaging, motivational, and offer useful suggestions to make the task more enjoyable or sustainable.
 - Ensure that your output can be parsed using Python’s `json.loads()` without any errors.
 - Only return the JSON object — no explanations, comments, or extra text.
@@ -102,7 +105,8 @@ User Preferences:
         "step_2": "Do 5–10 minutes of gentle hamstring and back stretches.",
         "step_3": "Finish with deep breathing and light mobility drills to energize."
     }),
-    "task1_timings": "07:00 AM - 07:30 AM",
+    "task1_timings_start": "07:00:00",
+    "task1_timings_end": "07:30:00",
     "task1_tip": "Play calming instrumental music to enhance relaxation during stretches.",
 
     "task2_title": "Afternoon Chair Workout",
@@ -111,7 +115,8 @@ User Preferences:
         "step_2": "Do 2 sets of 10 chair squats and light arm curls with water bottles.",
         "step_3": "Cool down with shoulder rolls and relaxed breathing."
     }),
-    "task2_timings": "01:00 PM - 01:30 PM",
+    "task2_timings_start": "01:00:00",
+    "task2_timings_end": "01:30:00",
     "task2_tip": "Watch your favorite show while working out to stay motivated.",
 
     "task3_title": "Evening Relaxation Walk",
@@ -120,7 +125,8 @@ User Preferences:
         "step_2": "Walk at a relaxed pace for 15 minutes while maintaining good posture.",
         "step_3": "End with standing stretches for your legs and lower back."
     }),
-    "task3_timings": "06:30 PM - 07:00 PM",
+    "task3_timings_start": "06:30:00",
+    "task3_timings_end": "07:00:00",
     "task3_tip": "Listen to an audiobook or podcast to make the walk more enjoyable."
 })
 
@@ -143,7 +149,8 @@ User Preferences:
         "step_2": "Perform 4 sets of compound lifts: squats, deadlifts, bench presses.",
         "step_3": "Cool down with light cardio and foam rolling."
     }),
-    "task1_timings": "12:30 PM - 01:30 PM",
+    "task1_timings_start": "12:30:00",
+    "task1_timings_end": "13:30:00",
     "task1_tip": "Use a workout playlist with high-energy music to push through heavy sets.",
 
     "task2_title": "Evening Core & Mobility",
@@ -152,7 +159,8 @@ User Preferences:
         "step_2": "Spend 15 minutes on hip openers, spinal twists, and shoulder mobility.",
         "step_3": "Finish with breathing exercises and light stretching."
     }),
-    "task2_timings": "06:00 PM - 06:45 PM",
+    "task2_timings_start": "18:00:00",
+    "task2_timings_end": "18:45:00",
     "task2_tip": "Light candles or use a diffuser for a spa-like atmosphere during stretches.",
 
     "task3_title": "Morning Light Cardio",
@@ -161,7 +169,8 @@ User Preferences:
         "step_2": "Maintain moderate pace for another 10 minutes.",
         "step_3": "Cool down with easy pace and full-body stretches."
     }),
-    "task3_timings": "07:30 AM - 08:00 AM",
+    "task3_timings_start": "07:00:00",
+    "task3_timings_end": "08:00:00",
     "task3_tip": "Take your cardio session outdoors for fresh air and natural light."
 })
 
