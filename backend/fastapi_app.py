@@ -1,6 +1,6 @@
 from fastapi import FastAPI, status, HTTPException, Depends
 from .routers import auth, preferences, plans, coach, calendar
-from . import orm_models, database, schemas, oauth2
+from . import orm_models, database, schemas, oauth2, event_scheduler
 from typing import Annotated, List
 from sqlalchemy.orm import Session
 

@@ -76,15 +76,11 @@ def create_plan(
     return new_plan
 
 ## UPDATE PLAN ---------------------------
-@router.put("", response_model=schemas.Plans, status_code=status.HTTP_200_OK)
-def update_plan(
-    current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
-    db: Session = Depends(database.get_db)
-):
+def update_plan_for_user(user: orm_models.Users, db: Session) -> orm_models.Plans:
     """Updates the user's plan if the preferences and the plan already exists."""
     
     # Check if user has preferences
-    preferences = db.query(orm_models.Preferences).filter(orm_models.Preferences.owner_email == current_user.email).first()
+    preferences = db.query(orm_models.Preferences).filter(orm_models.Preferences.owner_email == user.email).first()
     if not preferences:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -92,7 +88,7 @@ def update_plan(
         )
         
     # check if user has existing plans    
-    plan_query = db.query(orm_models.Plans).filter(orm_models.Plans.owner_email == current_user.email)
+    plan_query = db.query(orm_models.Plans).filter(orm_models.Plans.owner_email == user.email)
     if not plan_query.first():
         raise HTTPException(
             status_code=404, 
@@ -103,7 +99,7 @@ def update_plan(
     preferred_timings_list.insert(0, f"Hard constraint (even if the next elements in this list conflicts with this constraint, you must obey hard this constraint) : The suggested plan must take place after {datetime.now().strftime("%H hrs %M mins")}")
     preferences.preferred_timings = preferred_timings_list
     
-    print(preferences.preferred_timings)
+    # print(preferences.preferred_timings)
     
     # Generate plan using preferences
     generated_plan = utils.get_todays_plan(preferences)
@@ -124,6 +120,14 @@ def update_plan(
     plan_query.update(validated_plan.dict(), synchronize_session=False)
     db.commit()
     return plan_query.first()
+
+
+@router.put("", response_model=schemas.Plans, status_code=status.HTTP_200_OK)
+def update_plan(
+    current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
+    db: Session = Depends(database.get_db)
+):
+    return update_plan_for_user(current_user, db)
 
 ## DELETE PLAN -------------------------------
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)

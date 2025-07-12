@@ -159,30 +159,47 @@ def sync_calendar():
     # Google Calendar Sync
     col1, col2 = st.columns([3, 1])  # adjust ratio as needed # right aligned
 
-    with col2:
-        sync = st.button("Sync Calendar", key="calendar_sync")
-
     # jwt token headers
     headers = {
         "Authorization": f"Bearer {utils.get_token()}"
     }
+
+    response_user = requests.get(API_URL + "/me", headers=headers)
+    if response_user.status_code == 200 :
+        if response_user.json().get("is_google_synced") == False:
+            with col2:
+                sync_button = st.button("Sync Calendar")
+        else:
+            with col2:
+                sync_button = st.button("Unsync Calendar")
+
     
-    # if sync is pressed, display the sync url   
-    if sync:
+    # if sync button is pressed, display the sync url   
+    if sync_button:
         # st.success("Click below to authorize Google Calendar sync:")
         try:
-            response = requests.get(API_URL + "/calendar/sync/start", headers=headers)
-            if response.status_code == 307:
-                auth_url = response.json().get("auth_url")
-                if auth_url:
-                    sync_redirect(auth_url= auth_url)
-            elif response.status_code == 404:
-                st.toast(response.json().get("detail", "Plans not found!"))
+            if response_user.json().get("is_google_synced") == False:
+                response = requests.get(API_URL + "/calendar/sync/start", headers=headers)
+                if response.status_code == 307:
+                    auth_url = response.json().get("auth_url")
+                    if auth_url:
+                        sync_redirect(auth_url= auth_url)
+                elif response.status_code == 404:
+                    st.toast(response.json().get("detail", "Plans not found! Set up your preferences first."))
+                else:
+                    st.toast("Failed to initiate calendar sync.")
             else:
-                st.toast("Failed to initiate calendar sync.")
+                response = requests.delete(API_URL + "/calendar/sync/unsync_and_delete_events", headers=headers)
+                if response.status_code == 200:
+                    st.toast("✅ Calendar unsynced successfully!")
+                    st.rerun()  # Refresh the page to update the state
+                else:
+                    st.toast("Failed to unsync calendar.")
+            
         except Exception as e:
             st.error(f"Error: {e}")
 
+    
 if __name__ == "__main__":
     
     headers()

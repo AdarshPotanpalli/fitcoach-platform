@@ -13,6 +13,10 @@ from backend.config import settings
 from backend import schemas
 import json
 import asyncio
+from datetime import date
+from cryptography.fernet import Fernet
+import os
+from dotenv import load_dotenv
 
 ## hasing and varifying passwords ---------------------------------------------------
 from passlib.context import CryptContext
@@ -25,6 +29,17 @@ def hash(raw_password:str):
 def verify(raw_password: str, hashed_password:str):
     """Verify if the entered raw password mathes the hashed password"""
     return pwd_context.verify(secret= raw_password, hash = hashed_password)
+
+## encrypting and decrypting the google credentials -----------------------------------
+load_dotenv()
+fernet = Fernet(os.getenv("GOOGLE_CREDENTIALS_ENCRYPTION_KEY").encode())
+
+def encrypt_credentials(credentials: str) -> str:
+    return fernet.encrypt(credentials.encode()).decode()
+
+def decrypt_credentials(encrypted: str) -> dict:
+    decrypted_bytes = fernet.decrypt(encrypted.encode())
+    return json.loads(decrypted_bytes.decode())
 
 
 ## llm agent ---------------------------------------------------------------------------
@@ -319,3 +334,69 @@ async def get_chatbot_response(user_query: str,
         config = {"session_id": user_id, "callbacks": [handler]}
     ):
         yield chunk.content
+        
+def create_calendar_events(user_plans: schemas.Plans, service):
+    
+    """Creates calendar events based on the user's plans."""
+    
+    # creating events from user's plans -------------------------------->
+    todays_date = date.today().isoformat()  # Get today's date in ISO format
+    task1_content = ""
+    task2_content = "" 
+    task3_content = ""
+    task1_content_dict = json.loads(user_plans.task1_content)
+    for i, (step, task) in enumerate(task1_content_dict.items()):
+        task1_content += f"Step {i+1}:   {task}\n\n"
+    task2_content_dict = json.loads(user_plans.task2_content)
+    for step, task in task2_content_dict.items():
+        task2_content += f"Step {i+1}:   {task}\n\n"
+    task3_content_dict = json.loads(user_plans.task3_content)
+    for step, task in task3_content_dict.items():
+        task3_content += f"Step {i+1}:   {task}\n\n"
+    event1 = {
+        'summary': user_plans.task1_title,
+        'description': task1_content,
+        'start': {
+            'dateTime': todays_date + 'T' + user_plans.task1_timings_start,
+            'timeZone': 'Europe/Berlin',
+        },
+        'end': {
+            'dateTime': todays_date + 'T' + user_plans.task1_timings_end,
+            'timeZone': 'Europe/Berlin',
+        },
+    }
+    event2 = {
+        'summary': user_plans.task2_title,
+        'description': task2_content,
+        'start': {
+            'dateTime': todays_date + 'T' + user_plans.task2_timings_start,
+            'timeZone': 'Europe/Berlin',
+        },
+        'end': {
+            'dateTime': todays_date + 'T' + user_plans.task2_timings_end,
+            'timeZone': 'Europe/Berlin',
+        },
+    }
+    event3 = {
+        'summary': user_plans.task3_title,
+        'description': task3_content,
+        'start': {
+            'dateTime': todays_date + 'T' + user_plans.task3_timings_start,
+            'timeZone': 'Europe/Berlin',
+        },
+        'end': {
+            'dateTime': todays_date + 'T' + user_plans.task3_timings_end,
+            'timeZone': 'Europe/Berlin',
+        },
+    }
+    # -------------------------------------------------------------------------------
+    created_event_ids = []
+    
+    created_event1 = service.events().insert(calendarId='primary', body=event1).execute()
+    created_event_ids.append(created_event1['id'])
+    created_event2 = service.events().insert(calendarId='primary', body=event2).execute()
+    created_event_ids.append(created_event2['id'])
+    created_event3 = service.events().insert(calendarId='primary', body=event3).execute()
+    created_event_ids.append(created_event3['id'])
+    
+    return created_event_ids

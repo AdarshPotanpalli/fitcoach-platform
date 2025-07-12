@@ -5,11 +5,13 @@ from .. import utils, database, schemas, orm_models, oauth2, config
 from typing import Annotated
 from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import os
 from datetime import date
 import json
+from google.auth.transport.requests import Request as GoogleRequest
 
 load_dotenv()
 
@@ -27,9 +29,18 @@ os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # For testing only (allows HTTP
 
 # Start OAuth
 @router.get("/start")
-def start_google_sync(user=Depends(oauth2.get_current_user), token = Depends(oauth2.oauth2_scheme)):
+def start_google_sync(user=Depends(oauth2.get_current_user), token = Depends(oauth2.oauth2_scheme), db: Session = Depends(database.get_db)):
     
     """Directs the user to Google's OAuth 2.0 auth login(consent) page"""
+    
+    # get plans of the user
+    user_plans = db.query(orm_models.Plans).filter(orm_models.Plans.owner_email == user.email).first()
+    if not user_plans:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No plans found for user {user.username}, please set up your preferences first."
+        )
+    
     flow = Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE,
         scopes=SCOPES,
@@ -77,64 +88,24 @@ def calendar_sync_callback(request: Request, db: Session = Depends(database.get_
     )
     flow.fetch_token(code=code) # Exchange the code for an access token
     credentials = flow.credentials
+    
+    encrypted_credentials = utils.encrypt_credentials(credentials.to_json())
+    user.google_credentials = encrypted_credentials # Store the credentials as json string in the user table
+    user.is_google_synced = True  # Mark the user as synced with Google Calendar
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
     # Create Google Calendar event
     service = build("calendar", "v3", credentials=credentials)
     
-    # creating events from user's plans -------------------------------->
-    todays_date = date.today().isoformat()  # Get today's date in ISO format
-    task1_content = ""
-    task2_content = "" 
-    task3_content = ""
-    task1_content_dict = json.loads(user_plans.task1_content)
-    for i, (step, task) in enumerate(task1_content_dict.items()):
-        task1_content += f"Step {i+1}:   {task}\n\n"
-    task2_content_dict = json.loads(user_plans.task2_content)
-    for step, task in task2_content_dict.items():
-        task2_content += f"Step {i+1}:   {task}\n\n"
-    task3_content_dict = json.loads(user_plans.task3_content)
-    for step, task in task3_content_dict.items():
-        task3_content += f"Step {i+1}:   {task}\n\n"
-    event1 = {
-        'summary': user_plans.task1_title,
-        'description': task1_content,
-        'start': {
-            'dateTime': todays_date + 'T' + user_plans.task1_timings_start,
-            'timeZone': 'Europe/Berlin',
-        },
-        'end': {
-            'dateTime': todays_date + 'T' + user_plans.task1_timings_end,
-            'timeZone': 'Europe/Berlin',
-        },
-    }
-    event2 = {
-        'summary': user_plans.task2_title,
-        'description': task2_content,
-        'start': {
-            'dateTime': todays_date + 'T' + user_plans.task2_timings_start,
-            'timeZone': 'Europe/Berlin',
-        },
-        'end': {
-            'dateTime': todays_date + 'T' + user_plans.task2_timings_end,
-            'timeZone': 'Europe/Berlin',
-        },
-    }
-    event3 = {
-        'summary': user_plans.task3_title,
-        'description': task3_content,
-        'start': {
-            'dateTime': todays_date + 'T' + user_plans.task3_timings_start,
-            'timeZone': 'Europe/Berlin',
-        },
-        'end': {
-            'dateTime': todays_date + 'T' + user_plans.task3_timings_end,
-            'timeZone': 'Europe/Berlin',
-        },
-    }
-    # -------------------------------------------------------------------------------
-    created_event3 = service.events().insert(calendarId='primary', body=event1).execute()
-    created_event2 = service.events().insert(calendarId='primary', body=event2).execute()
-    created_event3 = service.events().insert(calendarId='primary', body=event3).execute()
+    # Create calendar events based on the user's plans
+    google_event_ids = utils.create_calendar_events(user_plans, service)
+    
+    user.google_event_ids = json.dumps(google_event_ids)  # Store the event IDs as a JSON string in the user table
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
     # Return HTML that closes the tab
     html_content = """
@@ -154,3 +125,230 @@ def calendar_sync_callback(request: Request, db: Session = Depends(database.get_
     </html>
     """
     return HTMLResponse(content=html_content)
+
+# Update endpoint will be used mostly, the below post and delete endpoints are for testing purposes
+
+# Flow -> every new day, the events from the previous day should be deleted and new events should be created for the current day
+# OR
+# Flow -> if the user wants to update their current day's events, they click on the update button, which delets the current day's events and creates new events based
+def update_events_for_user(user: orm_models.Users, db: Session) -> JSONResponse:
+    
+    """Endpoint to update the user's Google Calendar events for the current day.
+    Deletes the previous day's events and creates new events based on the user's plans."""
+    
+    if not user.google_credentials:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google Calendar is not synced. Please sync your calendar first."
+        )
+    
+    if not user.google_event_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No events found in Google Calendar to update. Please sync your calendar first."
+        )
+    
+    # get plans of the user
+    user_plans = db.query(orm_models.Plans).filter(orm_models.Plans.owner_email == user.email).first()
+    if not user_plans:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No plans found for user {user.username}, please set up your preferences first."
+        )
+    
+    try:
+        decrypted_credentials = utils.decrypt_credentials(user.google_credentials)
+        credentials = Credentials.from_authorized_user_info(decrypted_credentials, SCOPES)
+        
+        # refresh the credentials if they are expired
+        if not credentials.valid:
+            if credentials.expired and credentials.refresh_token:
+                credentials.refresh(GoogleRequest())
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Google Calendar credentials are invalid or expired. Please re-sync your calendar."
+                )
+        
+        service = build("calendar", "v3", credentials=credentials)
+        
+        
+        # Delete all events in the user's calendar whose IDs are stored in the users table
+        event_ids = json.loads(user.google_event_ids)  # Load the event IDs from the user's record
+        # print(f"Deleting events with IDs: {event_ids}")
+        for event_id in event_ids:
+            try:
+                service.events().delete(calendarId='primary', eventId=event_id).execute()
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"An error occurred while deleting event {event_id} from Google Calendar: {str(e)}"
+                )
+        
+        # Clear the google_event_ids field in the user table
+        user.google_event_ids = json.dumps([])  # Clear the event IDs
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+        # Create calendar events based on the user's plans + get the corresponding event IDs
+        google_event_ids = utils.create_calendar_events(user_plans, service)
+        user.google_event_ids = json.dumps(google_event_ids)  # Store the event IDs as a JSON string in the user table
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"message": "Events updated to Google Calendar successfully."}
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while updating events from Google Calendar: {str(e)}"
+        )
+
+@router.put("/update_events")
+def update_events(current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)], 
+                 db: Session = Depends(database.get_db)):
+    
+    return update_events_for_user(current_user, db)
+    
+
+
+## The below endpoints are used only in special scenarios, which can occur only during testing or debugging.
+
+# Post Event to Google Calendar
+@router.post("/post_event")
+def post_event(current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)], 
+               db: Session = Depends(database.get_db)):
+    """Endpoint to post an event to the Google Calendar, if the user has already synced their calendar."""
+    
+    if not current_user.google_credentials:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google Calendar is not synced. Please sync your calendar first."
+        )
+    
+    if current_user.google_event_ids and current_user.google_event_ids != "[]":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Events already posted to Google Calendar. Please delete existing events before posting new ones."
+        )
+        
+    try:
+        decrypted_credentials = utils.decrypt_credentials(current_user.google_credentials)
+        credentials = Credentials.from_authorized_user_info(decrypted_credentials, SCOPES)
+
+        # refresh the credentials if they are expired
+        if not credentials.valid:
+            if credentials.expired and credentials.refresh_token:
+                credentials.refresh(GoogleRequest())
+            else:
+                # if the credentials are invalid and the refresh token is not available, or if refresh fails
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Google Calendar credentials are invalid or expired. Please re-sync your calendar."
+                )
+        
+        # get plans of the user
+        user_plans = db.query(orm_models.Plans).filter(orm_models.Plans.owner_email == current_user.email).first()
+        if not user_plans:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No plans found for user {current_user.username}, please set up your preferences first."
+            )
+            
+        # build the service with the refreshed credentials
+        service = build("calendar", "v3", credentials=credentials)
+        
+        # Create calendar events based on the user's plans + get the corresponding event IDs
+        google_event_ids = utils.create_calendar_events(user_plans, service)
+        current_user.google_event_ids = json.dumps(google_event_ids)  # Store the event IDs as a JSON string in the user table
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+        
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"message": "Events posted to Google Calendar successfully."}
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while posting events to Google Calendar: {str(e)}"
+        )
+        
+# Delete Events from Google Calendar and clear the google credentials and is_google_synced flag      
+@router.delete("/unsync_and_delete_events")
+def unsync_and_delete_events(current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)], 
+                  db: Session = Depends(database.get_db)):
+    """Endpoint to delete all events from the user's Google Calendar."""
+    
+    # get plans of the user
+    user_plans = db.query(orm_models.Plans).filter(orm_models.Plans.owner_email == current_user.email).first()
+    if not user_plans:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No plans found for user {current_user.username}."
+        )
+    
+    if not current_user.google_credentials:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google Calendar is not synced. Please sync your calendar first."
+        )
+        
+    if not current_user.google_event_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No events found in Google Calendar to delete. Please sync your calendar first."
+        )
+        
+    try:
+        decrypted_credentials = utils.decrypt_credentials(current_user.google_credentials)
+        credentials = Credentials.from_authorized_user_info(decrypted_credentials, SCOPES)
+        
+        # refresh the credentials if they are expired
+        if not credentials.valid:
+            if credentials.expired and credentials.refresh_token:
+                credentials.refresh(GoogleRequest())
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Google Calendar credentials are invalid or expired. Please re-sync your calendar."
+                )
+        
+        service = build("calendar", "v3", credentials=credentials)
+        
+        # Delete all events in the user's calendar whose IDs are stored in the users table
+        event_ids = json.loads(current_user.google_event_ids)  # Load the event IDs from the user's record
+        for event_id in event_ids:
+            try:
+                service.events().delete(calendarId='primary', eventId=event_id).execute()
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"An error occurred while deleting event {event_id} from Google Calendar: {str(e)}"
+                )
+        
+        # Clear the google_event_ids field in the user table
+        current_user.google_event_ids = None  # Clear the event IDs
+        current_user.google_credentials = None  # Clear the Google credentials
+        current_user.is_google_synced = False  # Mark the user as not synced with Google Calendar
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+        
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"message": "Events deleted from Google Calendar and user unsynced successfully."}
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while deleting events from Google Calendar: {str(e)}"
+        )

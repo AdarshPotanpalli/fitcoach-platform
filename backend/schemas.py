@@ -11,6 +11,7 @@ class CreateUserResponse(BaseModel):
     email: EmailStr
     username: str
     created_at: datetime
+    is_google_synced: bool = False
     
     class Config: # setting the compatibility of return of an endpoint
         from_attributes = True
