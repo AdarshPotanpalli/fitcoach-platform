@@ -25,4 +25,9 @@ def get_all_users(db: Session = Depends(database.get_db)):
     if not users:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No users found!")
     return users
+
+@app.on_event("startup")
+def on_startup():
+    """Starts the background scheduler to update the plans every day at 6 AM"""
+    event_scheduler.start_scheduler()
     

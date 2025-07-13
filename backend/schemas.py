@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional, Dict
 
 class CreateUser(BaseModel):
@@ -12,6 +12,7 @@ class CreateUserResponse(BaseModel):
     username: str
     created_at: datetime
     is_google_synced: bool = False
+    date_last_synced: Optional[date] = None
     
     class Config: # setting the compatibility of return of an endpoint
         from_attributes = True

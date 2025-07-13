@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from datetime import date
 import numpy as np
 import plotly.express as px
 import streamlit as st
@@ -8,6 +9,7 @@ import plotly.graph_objects as go
 import requests
 from frontend.streamlit_app import API_URL
 from frontend import utils
+import time
 
 
 def headers(): 
@@ -148,16 +150,16 @@ def footnote():
     ## get a new quote per day -----> 
     st.info("💡 *“Discipline is the bridge between goals and accomplishment.” – Jim Rohn*")
 
-@st.dialog("Sync with Google Calendar")
+@st.dialog("Google Authentication Required")
 def sync_redirect(auth_url:str):
-    st.write("Do you want to sync your workout plan with Google Calendar?")
-    if st.link_button("Sync Now", url = auth_url):
-        st.toast("🔄 Redirecting to Google Calendar sync...")
+    st.write("You need to authenticate your Google Calendar first.")
+    if st.link_button("Google Calendar Authenticate", url = auth_url):
+        st.toast("🔄 Redirecting to Google Calendar authentication...")
 
 def sync_calendar():
     """ Function to sync with Google Calendar """
     # Google Calendar Sync
-    col1, col2 = st.columns([3, 1])  # adjust ratio as needed # right aligned
+    col1, col2, col3 = st.columns([2, 1,  1])  # adjust ratio as needed # right aligned
 
     # jwt token headers
     headers = {
@@ -165,45 +167,103 @@ def sync_calendar():
     }
 
     response_user = requests.get(API_URL + "/me", headers=headers)
-    if response_user.status_code == 200 :
-        if response_user.json().get("is_google_synced") == False:
-            with col2:
+    if response_user.status_code == 200 : # User is jwt authenticated
+        if response_user.json().get("is_google_synced") == False: # User is not synced with Google Calendar
+            with col3:
                 sync_button = st.button("Sync Calendar")
+                if sync_button: # if sync button is pressed
+                    try:
+                        response_post = requests.post(API_URL + "/calendar/sync/post_event", headers=headers)
+                        if response_post.status_code == 400: # Bad Request, user not google authenticated
+                            response = requests.get(API_URL + "/calendar/sync/start", headers=headers)
+                            if response.status_code == 307:
+                                auth_url = response.json().get("auth_url")
+                                if auth_url:
+                                    sync_redirect(auth_url= auth_url) # redirect for Google Calendar authentication
+                            elif response.status_code == 404:
+                                st.toast(response.json().get("detail", "Plans not found! Set up your preferences first."))
+                            else:
+                                st.toast("Failed to initiate calendar sync.")
+                        elif response_post.status_code == 200: # Calendar synced successfully
+                            st.toast("✅ Calendar synced successfully!")
+                            # wait for 3 seconds before refreshing the page
+                            time.sleep(1)
+                            st.rerun() 
+                        else:
+                            st.toast("Failed to sync calendar.")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
         else:
             with col2:
-                sync_button = st.button("Unsync Calendar")
+                sync_button = st.button("Got new plans? Sync Calendar Again!")
+                if sync_button: # if sync button is pressed
+                    try:
+                        response = requests.put(API_URL + "/calendar/sync/update_events", headers=headers)
+                        if response.status_code == 200:
+                            st.toast("✅ Calendar updated successfully!")
+                            # wait for 1 seconds before refreshing the page
+                            time.sleep(1)
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+            
+            with col3:
+                unsync_button = st.button("Unsync Calendar")
+                if unsync_button:
+                    try:
+                        response = requests.delete(API_URL + "/calendar/sync/unsync_and_delete_events", headers=headers)
+                        if response.status_code == 200:
+                            st.toast("✅ Calendar unsynced successfully!")
+                            time.sleep(1)
+                            st.rerun()  # Refresh the page to update the state
+                        else:
+                            st.toast("Failed to unsync calendar.")
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+                            
 
     
-    # if sync button is pressed, display the sync url   
-    if sync_button:
-        # st.success("Click below to authorize Google Calendar sync:")
-        try:
-            if response_user.json().get("is_google_synced") == False:
-                response = requests.get(API_URL + "/calendar/sync/start", headers=headers)
-                if response.status_code == 307:
-                    auth_url = response.json().get("auth_url")
-                    if auth_url:
-                        sync_redirect(auth_url= auth_url)
-                elif response.status_code == 404:
-                    st.toast(response.json().get("detail", "Plans not found! Set up your preferences first."))
-                else:
-                    st.toast("Failed to initiate calendar sync.")
-            else:
-                response = requests.delete(API_URL + "/calendar/sync/unsync_and_delete_events", headers=headers)
-                if response.status_code == 200:
-                    st.toast("✅ Calendar unsynced successfully!")
-                    st.rerun()  # Refresh the page to update the state
-                else:
-                    st.toast("Failed to unsync calendar.")
+    # # if sync button is pressed, display the sync url   
+    # if sync_button:
+    #     # st.success("Click below to authorize Google Calendar sync:")
+    #     try:
+    #         if response_user.json().get("is_google_synced") == False:
+    #             response_post = requests.post(API_URL + "/calendar/sync/post_event", headers=headers)
+    #             if response_post.status_code == 400: # Bad Request, user not google authenticated
+    #                 response = requests.get(API_URL + "/calendar/sync/start", headers=headers)
+    #                 if response.status_code == 307:
+    #                     auth_url = response.json().get("auth_url")
+    #                     if auth_url:
+    #                         sync_redirect(auth_url= auth_url)
+    #                 elif response.status_code == 404:
+    #                     st.toast(response.json().get("detail", "Plans not found! Set up your preferences first."))
+    #                 else:
+    #                     st.toast("Failed to initiate calendar sync.")
+    #             elif response_post.status_code == 200:
+    #                 st.toast("✅ Calendar synced successfully!")
+    #                 # wait for 3 seconds before refreshing the page
+    #                 time.sleep(1)
+    #                 st.rerun() 
+    #             else:
+    #                 st.toast("Failed to sync calendar.")
+    #         else:
+    #             response = requests.delete(API_URL + "/calendar/sync/unsync_and_delete_events", headers=headers)
+    #             if response.status_code == 200:
+    #                 st.toast("✅ Calendar unsynced successfully!")
+    #                 time.sleep(1)
+    #                 st.rerun()  # Refresh the page to update the state
+    #             else:
+    #                 st.toast("Failed to unsync calendar.")
             
-        except Exception as e:
-            st.error(f"Error: {e}")
+    #     except Exception as e:
+    #         st.error(f"Error: {e}")
 
     
 if __name__ == "__main__":
     
     headers()
-    sync_calendar()
+    
+    sync_calendar() # optional feature to sync with google calendar
     
     # Simulate today's and yesterday's data
     today = datetime.date.today()

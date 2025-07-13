@@ -15,6 +15,7 @@ class Users(Base):
     google_credentials = Column(String, nullable=True) # Stores the credentials for the Google Calendar API
     google_event_ids = Column(Text, nullable=True)  # Stores the IDs of created calendar events as a JSON string
     is_google_synced = Column(Boolean, default=False, nullable = False)  # Indicates if the user has synced with Google Calendar
+    date_last_synced = Column(Date, nullable=True)  # Date when the user last synced with Google Calendar
     
     # setting the relationship
     preferences = relationship("Preferences", back_populates="owner")

@@ -91,7 +91,6 @@ def calendar_sync_callback(request: Request, db: Session = Depends(database.get_
     
     encrypted_credentials = utils.encrypt_credentials(credentials.to_json())
     user.google_credentials = encrypted_credentials # Store the credentials as json string in the user table
-    user.is_google_synced = True  # Mark the user as synced with Google Calendar
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -100,12 +99,12 @@ def calendar_sync_callback(request: Request, db: Session = Depends(database.get_
     service = build("calendar", "v3", credentials=credentials)
     
     # Create calendar events based on the user's plans
-    google_event_ids = utils.create_calendar_events(user_plans, service)
+    # google_event_ids = utils.create_calendar_events(user_plans, service)
     
-    user.google_event_ids = json.dumps(google_event_ids)  # Store the event IDs as a JSON string in the user table
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    # user.google_event_ids = json.dumps(google_event_ids)  # Store the event IDs as a JSON string in the user table
+    # db.add(user)
+    # db.commit()
+    # db.refresh(user)
 
     # Return HTML that closes the tab
     html_content = """
@@ -115,22 +114,18 @@ def calendar_sync_callback(request: Request, db: Session = Depends(database.get_
             <script>
                 setTimeout(() => {
                     window.close();
-                }, 3000);
+                }, 4000);
             </script>
         </head>
         <body>
-            <h3>✅ Your workout plan has been synced to Google Calendar!</h3>
+            <h3>✅ Google calendar authenticated! Click "Sync Calendar" again</h3>
             <p>This tab will close automatically...</p>
         </body>
     </html>
     """
     return HTMLResponse(content=html_content)
 
-# Update endpoint will be used mostly, the below post and delete endpoints are for testing purposes
-
-# Flow -> every new day, the events from the previous day should be deleted and new events should be created for the current day
-# OR
-# Flow -> if the user wants to update their current day's events, they click on the update button, which delets the current day's events and creates new events based
+# Update the user's Google Calendar events
 def update_events_for_user(user: orm_models.Users, db: Session) -> JSONResponse:
     
     """Endpoint to update the user's Google Calendar events for the current day.
@@ -194,6 +189,8 @@ def update_events_for_user(user: orm_models.Users, db: Session) -> JSONResponse:
         # Create calendar events based on the user's plans + get the corresponding event IDs
         google_event_ids = utils.create_calendar_events(user_plans, service)
         user.google_event_ids = json.dumps(google_event_ids)  # Store the event IDs as a JSON string in the user table
+        user.is_google_synced = True  # Mark the user as synced with Google Calendar
+        user.date_last_synced = date.today()  # Update the last synced date
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -266,6 +263,8 @@ def post_event(current_user: Annotated[schemas.CreateUserResponse, Depends(oauth
         # Create calendar events based on the user's plans + get the corresponding event IDs
         google_event_ids = utils.create_calendar_events(user_plans, service)
         current_user.google_event_ids = json.dumps(google_event_ids)  # Store the event IDs as a JSON string in the user table
+        current_user.is_google_synced = True  # Mark the user as synced with Google Calendar
+        current_user.date_last_synced = date.today() # Set the last synced date
         db.add(current_user)
         db.commit()
         db.refresh(current_user)
@@ -329,6 +328,18 @@ def unsync_and_delete_events(current_user: Annotated[schemas.CreateUserResponse,
             try:
                 service.events().delete(calendarId='primary', eventId=event_id).execute()
             except Exception as e:
+                if e.resp.status == 410:
+                    # If the event is already deleted or does not exist, continue
+                    
+                    # Clear the google_event_ids field in the user table
+                    current_user.google_event_ids = None  # Clear the event IDs
+                    current_user.google_credentials = None  # Clear the Google credentials
+                    current_user.is_google_synced = False  # Mark the user as not synced with Google Calendar
+                    db.add(current_user)
+                    db.commit()
+                    db.refresh(current_user)
+                    
+                    continue
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"An error occurred while deleting event {event_id} from Google Calendar: {str(e)}"
