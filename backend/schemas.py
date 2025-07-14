@@ -61,7 +61,10 @@ class Feedback(BaseModel):
     task1_done: bool
     task2_done: bool
     task3_done: bool
-    
+
+class FeedbackOut(Feedback):
+    date: date    
+
 # the user query input for the chatbot
 class UserQuery(BaseModel):
     user_query: str

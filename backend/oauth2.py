@@ -2,7 +2,7 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
 from typing import Annotated
-from jose import jwt
+from jose import jwt, JWTError, ExpiredSignatureError
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 
@@ -35,12 +35,21 @@ def create_access_token(data: dict):
 
 def verify_access_token(token:str, credentials_exception):
     """This function is used to verify the access token."""
-    payload = jwt.decode(token = token, key = SECRET_KEY, algorithms=[ALGORITHM])
-    email = payload.get("email") # get the payload
-    if email is None:
+    try:
+        payload = jwt.decode(token = token, key = SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("email") # get the payload
+        if email is None:
+            raise credentials_exception
+        token_data = schemas.TokenData(email= email) # schema validation
+        return token_data
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except JWTError:
         raise credentials_exception
-    token_data = schemas.TokenData(email= email) # schema validation
-    return token_data
     
 
 

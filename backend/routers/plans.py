@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from .. import utils, database, schemas, orm_models, oauth2
 from typing import Annotated, List
 from datetime import date, datetime
+from fastapi.responses import JSONResponse
 import json
 
 
@@ -146,7 +147,7 @@ def delete_plan(
 
 
 ## POST FEEDBACK --> if the user has finished the tasks or not
-@router.post("/feedback", response_model=schemas.Feedback, status_code= status.HTTP_200_OK)
+@router.post("/feedback", response_model=schemas.FeedbackOut, status_code= status.HTTP_200_OK)
 def post_feedback(
     feedback: schemas.Feedback,
     current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
@@ -180,3 +181,17 @@ def post_feedback(
     
     return user_feedback
     
+## GET the feedback history of the current user
+@router.get("/feedback", response_model=List[schemas.FeedbackOut], status_code=status.HTTP_200_OK)
+def get_feedback_history(
+    current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
+    db: Session = Depends(database.get_db)
+):
+    """Gets the feedback history of the current user."""
+    
+    feedback_history = db.query(orm_models.Feedback).filter(orm_models.Feedback.owner_email == current_user.email).all()
+    
+    if not feedback_history:
+        raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail=f"No feedback history found for {current_user.username}!")
+    
+    return feedback_history

@@ -23,10 +23,14 @@ def is_user_authenticated():
     headers = {
                 "Authorization": f"Bearer {get_token()}"
             }
-    response = requests.get(API_URL + "/me", headers=headers)
-    if response.status_code == 200:
-        return True
-    else:
+    try:
+        response = requests.get(API_URL + "/me", headers=headers)
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.RequestException as e:
+        st.error(f"Error checking authentication: {e}")
         return False
 
 

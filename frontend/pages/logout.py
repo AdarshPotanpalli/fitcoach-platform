@@ -7,7 +7,7 @@ def show_logout():
     # st.set_page_config(page_title="Logout", page_icon="🚪")
     st.title("🚪 Logout")
 
-    st.markdown("Thank you for using FitCoach! We'd love to hear your feedback before you go.")
+    st.markdown("Thank you for using FitCoach! I'd love to hear your views before you go.")
 
     st.subheader("🗣️ How was your experience?")
     # sentiment_mapping = [
@@ -40,7 +40,7 @@ def show_logout():
                 #     st.info(f"Comments: {comments}")
 
                 # Clear cookies
-                utils.logout_user()
+                # utils.logout_user()
 
                 st.rerun()
             else:

@@ -27,7 +27,13 @@ def stream_from_api(user_input: str):
             if chunk:
                 yield chunk + " "
 
-st.title("🦾💬 Your AI Coach Chatbot")
+# get the username ------>
+response_user = requests.get(API_URL + "/me", headers=headers)
+if response_user.status_code == 200:
+    user_data = response_user.json()
+    username = user_data.get("username", "User")
+
+st.title(f"🦾💬 {username}'s coach")
 
 plans_response = requests.get(API_URL + "/plans", headers = headers)
 if plans_response.status_code == 404:
