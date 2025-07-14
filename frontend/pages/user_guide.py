@@ -5,84 +5,76 @@ import streamlit as st
 st.title("📘 Welcome to Your Personal AI Health Coach App!")
 st.write("This guide helps you get the most out of your personalized health journey.")
 
-st.success("✅ Pro Tip: Follow the steps below to get started quickly!")
+st.markdown("<hr style='border: 1px dashed #ccc;'>", unsafe_allow_html=True)
 
-# Getting Started
-with st.expander("🚀 Getting Started"):
-    st.subheader("1. Login / Create Your Profile")
-    st.markdown("- 🔐 Use **Google Login** or register with **email and password**.")
-    st.markdown("- Your account securely stores your preferences and progress.")
-    if st.button("📝 Register Now"):
-        st.info("Redirecting to Sign Up page...")
-        st.switch_page("pages/register.py")
+# Row 1: Signup and Personalisation
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader("📝 Step 1: Create an Account")
+    st.markdown("Sign up with your email and password to get started.")
 
-# Navigation Overview
-with st.expander("🧭 Navigation Overview"):
-    st.subheader("📚 Resources")
+with col2:
+    st.subheader("🎯 Step 2: Set Your Preferences")
     st.markdown("""
-    - 🏠 **Dashboard** – See your current day’s plan, weekly progress, and motivational tips.  
-    - 🤖 **Your AI Coach** – Ask health questions and get personalized advice.  
-    - 📝 **How Was Your Day?** – Provide feedback to improve tomorrow's plan.
-    """)
-    st.subheader("👤 Your Account")
-    st.markdown("""
-    - 🔐 **Login/Register**  
-    - ⚙️ **Settings** – Manage preferences, calendar sync, and app behavior.
+    On the **Personalization page**, set your fitness goals and lifestyle.
+    This personalizes your experience. You can update these preferences anytime later.
     """)
 
-# Daily Routine
-with st.expander("📅 Daily Routine"):
-    st.subheader("🔄 Step-by-Step Flow")
-    st.markdown("""
-    1. Answer onboarding questions (goal, schedule, fitness level).  
-    2. ✅ A personalized daily movement plan is generated.  
-    3. 📆 Optionally sync with Google Calendar.  
-    4. 🧘 Follow the plan.  
-    5. ✍️ At night, give feedback on your day.
-    """)
-    st.info("Your feedback helps the AI improve your plan every day!")
+st.markdown("<hr style='border: 1px dashed #ccc;'>", unsafe_allow_html=True)
 
-# Ask Your Coach
-with st.expander("❓ Ask Your Coach"):
+# Row 2: Daily Plan and Feedback
+col3, col4 = st.columns(2)
+with col3:
+    st.subheader("📅 Step 3: Get Your Daily Plan")
     st.markdown("""
-    Use the **AI Coach page** to:
-    - Get **tailored health advice**.
-    - Ask for **alternative workouts** or motivation.
-    - Get **diet or recovery suggestions**.
-    """)
-    st.success("💡 The coach learns from your feedback and adapts every day.")
-
-# Dashboard Highlights
-with st.expander("📊 Dashboard Highlights"):
-    st.markdown("""
-    - **Today's Plan** – What’s scheduled for today.  
-    - **Progress Tracker** – Weekly performance summary.  
-    - **Motivation** – A new quote or insight every day.  
-    - **Activity Feed** – Log of your past and planned activities.
+    A new day plan is generated automatically every day.
+    Each plan contains **3 tasks**, and each task has **3 steps**.
     """)
 
-# Privacy
-with st.expander("🔐 Privacy & Data Safety"):
+with col4:
+    st.subheader("✅ Step 4: Give Feedback")
     st.markdown("""
-    - Your data is securely stored and used only to improve your experience.  
-    - Google login uses OAuth2 for security.  
-    - No data is shared with third parties.
-    """)
-    st.warning("🔒 Stay secure: Always log out after using shared devices.")
-
-# Tips
-with st.expander("💡 Tips for Best Experience"):
-    st.markdown("""
-    - Complete your feedback **daily** to help personalize future plans.  
-    - Keep your goals updated in the **Settings** page.  
-    - Enable **Google Calendar sync** to stay organized.  
-    - Come back regularly to ask your coach questions!
+    After completing your tasks, give feedback **before midnight**.
+    This helps track your progress accurately.
     """)
 
-st.markdown("---")
-st.header("🧘 Stay Consistent, Stay Healthy!")
-st.markdown("Let your AI coach guide you — one step at a time 💪")
+st.markdown("<hr style='border: 1px dashed #ccc;'>", unsafe_allow_html=True)
 
-if st.button("🎯 Get Started Now"):
-    st.balloons()
-    st.success("Awesome! Head to the Dashboard to begin your journey.")
+# Row 3: AI Coach and Dashboard
+col5, col6 = st.columns(2)
+with col5:
+    st.subheader("🤖 Step 5: Talk to Your AI Coach")
+    st.markdown("""
+    You can chat with the AI Coach anytime.
+    The coach knows your **goals** and **today’s plan**, and can guide you on your journey.
+    """)
+
+with col6:
+    st.subheader("📊 Step 6: Visit Your Dashboard")
+    st.markdown("""
+    Track your progress, view a summary of your day’s tasks,
+    and update today’s plan if you’re behind schedule.
+    """)
+
+st.markdown("<hr style='border: 1px dashed #ccc;'>", unsafe_allow_html=True)
+
+# Final Row: Calendar Syncing
+col7, col8 = st.columns(2)
+
+with col7:
+    st.subheader("📆 Optional: Google Calendar Sync")
+    st.markdown("""
+    From the dashboard, you can **sync your day’s plan to your Google Calendar**.
+    This requires Google authentication.
+    """)
+
+with col8:
+    st.subheader("🚫 Unsync Calendar if you wish")
+    st.markdown("""
+    You can also **unsync** your Google Calendar to remove the events.
+    Note: Calendar syncing is **not scheduled automatically** each day.
+    """)
+
+st.markdown("<hr style='border: 1px dashed #ccc;'>", unsafe_allow_html=True)
+
+st.success("We hope you enjoy the experience! Stay consistent and let your AI coach help you thrive.")
