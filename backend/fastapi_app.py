@@ -26,6 +26,22 @@ def get_all_users(db: Session = Depends(database.get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No users found!")
     return users
 
+@app.post("/user_ratings_comments", status_code=status.HTTP_201_CREATED)
+def post_user_ratings_comments(
+    current_user: Annotated[schemas.CreateUserResponse, Depends(oauth2.get_current_user)],
+    ratings: schemas.UserExperience, 
+    db: Session = Depends(database.get_db)
+):
+    """Posts the user ratings and comments about the app"""
+    
+    current_user.experience_rating = ratings.experience_rating
+    current_user.experience_comments = ratings.experience_comments
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    
+    return {"message": "Ratings and comments posted successfully!"}
+
 @app.on_event("startup")
 def on_startup():
     """Starts the background scheduler to update the plans every day at 6 AM"""

@@ -65,6 +65,11 @@ class Feedback(BaseModel):
 class FeedbackOut(Feedback):
     date: date    
 
+
+class UserExperience(BaseModel):
+    experience_rating: int = Field(ge=1, le=5)  # Rating from 1 to 5
+    experience_comments: Optional[str] = None  # Optional comments about the experience
+    
 # the user query input for the chatbot
 class UserQuery(BaseModel):
     user_query: str

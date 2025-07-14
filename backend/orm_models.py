@@ -17,6 +17,10 @@ class Users(Base):
     is_google_synced = Column(Boolean, default=False, nullable = False)  # Indicates if the user has synced with Google Calendar
     date_last_synced = Column(Date, nullable=True)  # Date when the user last synced with Google Calendar
     
+    # how was the experience using the app
+    experience_rating = Column(Integer, nullable=True)  # Rating from 1 to 5
+    experience_comments = Column(Text, nullable=True)  # Optional comments about the experience
+    
     # setting the relationship
     preferences = relationship("Preferences", back_populates="owner")
     feedback = relationship("Feedback", back_populates="owner")
