@@ -49,6 +49,8 @@ class Feedback(Base):
     task2_done = Column(Boolean, server_default= text("false"))
     task3_done = Column(Boolean, server_default= text("false"))
     date = Column(Date, nullable = False)
+    list_of_task_failures = Column(ARRAY(String), default=[])
+    list_of_task_successes = Column(ARRAY(String), default=[])
     
     # setting the foregin key
     owner_email = Column(String, ForeignKey("users.email", ondelete= "CASCADE"), nullable= False)

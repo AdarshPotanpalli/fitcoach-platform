@@ -70,6 +70,8 @@ def graphs():
             ],
             "margin": {"top": 0, "right": 0, "bottom": 0, "left": 30},
             "yearSpacing": 48,
+            "minValue": 0,
+            "maxValue": 3,
             "monthBorderColor": "#DDDDDD",
             "dayBorderWidth": 2,
             "dayBorderColor": "#ffffff",

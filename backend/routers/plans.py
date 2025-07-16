@@ -3,7 +3,7 @@ from fastapi import FastAPI, APIRouter, status, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from .. import utils, database, schemas, orm_models, oauth2
 from typing import Annotated, List
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from fastapi.responses import JSONResponse
 import json
 
@@ -100,10 +100,26 @@ def update_plan_for_user(user: orm_models.Users, db: Session) -> orm_models.Plan
     preferred_timings_list.insert(0, f"Hard constraint (even if the next elements in this list conflicts with this constraint, you must obey hard this constraint) : The suggested plan must take place after {datetime.now().strftime("%H hrs %M mins")}")
     preferences.preferred_timings = preferred_timings_list
     
-    # print(preferences.preferred_timings)
+    
+    end_date = date.today()
+    start_date = end_date - timedelta(days=4) # last 5 days feedback window is also given as input for plan update
+    list_of_task_failures = []
+    list_of_task_successes = []
+    
+    feedback_history = db.query(orm_models.Feedback).filter(
+        orm_models.Feedback.owner_email == user.email,
+        orm_models.Feedback.date >= start_date,
+        orm_models.Feedback.date <= end_date,
+        ).all()
+    
+    for feedback in feedback_history:
+        list_of_task_failures.extend(feedback.list_of_task_failures)
+        list_of_task_successes.extend(feedback.list_of_task_successes)
     
     # Generate plan using preferences
-    generated_plan = utils.get_todays_plan(preferences)
+    generated_plan = utils.get_todays_plan(preferences,
+                                           list_of_task_failures= list_of_task_failures,
+                                           list_of_task_successes= list_of_task_successes)
     # Convert task content to JSON strings
     generated_plan["task1_content"] = json.dumps(generated_plan["task1_content"])
     generated_plan["task2_content"] = json.dumps(generated_plan["task2_content"])
@@ -169,10 +185,22 @@ def post_feedback(
             status_code=status.HTTP_409_CONFLICT, 
             detail= f"{current_user.username} has already given feedback today!"
             ) 
-        
+    user_tasks = [user_plans.task1_title, user_plans.task2_title, user_plans.task3_title]
+    list_of_failures = []
+    list_of_successes = []
+    
+    
+    for i, (task, done) in enumerate(feedback):
+        if done:
+            list_of_successes.append(user_tasks[i])
+        else:
+            list_of_failures.append(user_tasks[i])
+    
     user_feedback = orm_models.Feedback(
         **feedback.dict(),
         owner_email = current_user.email,
+        list_of_task_failures = list_of_failures,
+        list_of_task_successes = list_of_successes,
         date = date.today()
         )
     db.add(user_feedback)
@@ -193,5 +221,6 @@ def get_feedback_history(
     
     if not feedback_history:
         raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail=f"No feedback history found for {current_user.username}!")
+    
     
     return feedback_history

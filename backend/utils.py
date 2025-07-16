@@ -61,6 +61,10 @@ You are a smart fitness and lifestyle planning assistant. Your job is to create 
 
 You will be given a prompt that contains the user's fitness goal, lifestyle type, preferred timings (in order of preference), and an optional note. This prompt will always be structured like a natural language query, labeled under the variable `query`.
 
+The user may provide tasks they failed to complete recently. The user has struggled with these tasks recently. Consider adjusting their intensity or frequency.
+
+The user may provide tasks they completed successfully. These tasks aligned well with the user's habits, preferences, or motivation. Use them as inspiration for related or slightly more challenging tasks.
+
 Your job is to generate a **valid JSON-serializable dictionary** that includes exactly the following 12 keys:
 - task1_title
 - task1_content (a dict with step_1, step_2, step_3)
@@ -97,6 +101,8 @@ User Preferences:
 - Lifestyle: {lifestyle}
 - Preferred Timings (in order of preference): {preferred_timings}
 - Note: {note}
+- Tasks the user failed to complete recently: {list_of_task_failures}
+- Tasks the user completed successfully: {list_of_task_successes}
 """
 
 
@@ -210,13 +216,15 @@ plans_prompt = ChatPromptTemplate.from_messages([
 ])
 
 ## calls the openai api to get the preferences of the current user -------------------------------------------
-def get_todays_plan(preferences: schemas.Preferences):
+def get_todays_plan(preferences: schemas.Preferences, list_of_task_failures = [], list_of_task_successes = []):
     
     preferences_dict = {
         "goal": preferences.goal,
         "lifestyle": preferences.lifestyle,
         "preferred_timings": preferences.preferred_timings,
         "note": preferences.note,
+        "list_of_task_failures": ", ".join(list_of_task_failures),
+        "list_of_task_successes": ", ".join(list_of_task_successes)
     }
     # print(f"My Preferences: {preferences_dict}")
     
@@ -225,7 +233,9 @@ def get_todays_plan(preferences: schemas.Preferences):
             "goal": lambda x: x["goal"],
             "lifestyle": lambda x: x["lifestyle"],
             "preferred_timings": lambda x: x["preferred_timings"],
-            "note": lambda x: x["note"]
+            "note": lambda x: x["note"],
+            "list_of_task_failures": lambda x: x["list_of_task_failures"],
+            "list_of_task_successes": lambda x: x["list_of_task_successes"]
         }
         | plans_prompt 
         | llm

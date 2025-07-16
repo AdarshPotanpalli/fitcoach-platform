@@ -63,6 +63,8 @@ class Feedback(BaseModel):
     task3_done: bool
 
 class FeedbackOut(Feedback):
+    list_of_task_failures: List
+    list_of_task_successes: List
     date: date    
 
 

@@ -4,7 +4,7 @@ import pytz
 from sqlalchemy.orm import Session
 from . import orm_models, database
 import requests
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import json
 from . import utils
 
@@ -27,15 +27,34 @@ def call_update_plans():
         preferred_timings_list.insert(0, f"Hard constraint (even if the next elements in this list conflicts with this constraint, you must obey hard this constraint) : The suggested plan must take place after {datetime.now().strftime("%H hrs %M mins")}")
         preferences.preferred_timings = preferred_timings_list
 
-        generated_plan = utils.get_todays_plan(preferences)
+
+        # the feedback history is also a context, which tells which kind of activities the user succeeded in doing and which they failed
+        end_date = date.today()
+        start_date = end_date - timedelta(days=4) # last 5 days feedback window is also given as input for plan update
+        list_of_task_failures = []
+        list_of_task_successes = []
+        
+        feedback_history = db.query(orm_models.Feedback).filter(
+            orm_models.Feedback.owner_email == user.email,
+            orm_models.Feedback.date >= start_date,
+            orm_models.Feedback.date <= end_date,
+            ).all()
+        
+        for feedback in feedback_history:
+            list_of_task_failures.extend(feedback.list_of_task_failures)
+            list_of_task_successes.extend(feedback.list_of_task_successes)
+
+
+        generated_plan = utils.get_todays_plan(preferences,
+                                           list_of_task_failures= list_of_task_failures,
+                                           list_of_task_successes= list_of_task_successes)
+        
         generated_plan["task1_content"] = json.dumps(generated_plan["task1_content"])
         generated_plan["task2_content"] = json.dumps(generated_plan["task2_content"])
         generated_plan["task3_content"] = json.dumps(generated_plan["task3_content"])
 
         plan_query.update(generated_plan, synchronize_session=False)
         db.commit()
-
-        # print("Updated plan for user:", user.email)
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
