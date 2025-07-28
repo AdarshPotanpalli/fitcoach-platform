@@ -40,12 +40,15 @@ cd fitcoach-platform
 ### 2. **Create and Configure Environment File**
 
 ```bash
-cp .env.example .env
+cp .env.example .env #copy .env.example .env (on Windows)
 ```
 
 Edit `.env` with your values:
 
 * `OPENAI_API_KEY` (required)
+* `DATABASE_USERNAME` (Your local postgres username)
+* `DATABASE_PASSWORD` (Your local postgres password)
+* `DATABASE_NAME` (Your local postgres name)
 
 ---
 
@@ -55,7 +58,7 @@ We recommend using a virtual environment:
 
 ```bash
 python -m venv venv
-source venv/bin/activate   # or venv\Scripts\activate on Windows
+source venv/bin/activate   #venv\Scripts\activate (on Windows)
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
