@@ -27,6 +27,12 @@ A personalized AI-powered health companion to help users set goals, track progre
 
 ---
 
+## Demo
+
+[![Watch the video](https://img.youtube.com/vi/sVU6ZUJItqs/0.jpg)](https://www.youtube.com/watch?v=sVU6ZUJItqs)
+
+
+---
 
 ## 🔧 Getting Started (Local Setup)
 
