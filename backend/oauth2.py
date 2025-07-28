@@ -3,7 +3,6 @@ from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta
 from typing import Annotated
 from jose import jwt, JWTError, ExpiredSignatureError
-from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 
 from .config import settings
@@ -76,7 +75,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
     try:
         # decode the token
         token_data = verify_access_token(token, credentials_exception) # this will raise exception if token is invalid
-    except InvalidTokenError:
+    except Exception:
         raise credentials_exception
     
     user = db.query(orm_models.Users).filter(orm_models.Users.email == token_data.email).first()

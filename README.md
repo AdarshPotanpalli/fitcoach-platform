@@ -46,9 +46,6 @@ cp .env.example .env
 Edit `.env` with your values:
 
 * `OPENAI_API_KEY` (required)
-* Database settings
-* Secret keys
-* Optional: Google credentials (can be left blank if not using calendar sync)
 
 ---
 
@@ -93,6 +90,8 @@ Streamlit UI: [http://localhost:8501](http://localhost:8501)
 4. Ask your **AI coach** for help anytime
 5. Track everything from your **dashboard**
 
+---
+
 ### 🔒 Google Calendar Integration (Optional)
 
 > ⚠️ **Note:** The Google Calendar sync features will **not work** in this local setup because the required `google_client_secret.json` file is **not included** in the repository for security reasons.
@@ -102,10 +101,9 @@ Streamlit UI: [http://localhost:8501](http://localhost:8501)
 
 ---
 
-## 📫 Contact
-
-Built by [Your Name](https://github.com/your-username)
-Feel free to reach out or contribute!
+>**Author:** Adarsh Potanpalli 
+>
+>**Email:** p.adarsh.24072001@gmail.com 
 
 ---
 
