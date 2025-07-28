@@ -3,9 +3,21 @@ from .routers import auth, preferences, plans, coach, calendar
 from . import orm_models, database, schemas, oauth2, event_scheduler
 from typing import Annotated, List
 from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 orm_models.Base.metadata.create_all(database.engine)
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("FRONTEND_URL")],  # Your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 app.include_router(auth.router)
 app.include_router(preferences.router)

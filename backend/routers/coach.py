@@ -3,8 +3,8 @@ from fastapi import FastAPI, APIRouter, status, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from .. import utils, database, schemas, orm_models, oauth2
 from typing import Annotated
-# from fastapi.responses import StreamingResponse
-from starlette.responses import StreamingResponse
+from fastapi.responses import StreamingResponse
+# from starlette.responses import StreamingResponse
 
 router = APIRouter(
     prefix= "/coach",
@@ -43,5 +43,5 @@ async def stream_chat(
                                              str(user_plans.task2_content),
                                              str(user_plans.task3_content), 
                                              user_preferences.goal),
-        media_type="text/plain"
+        media_type="text/event-stream"
     )

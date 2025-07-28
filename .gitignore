@@ -5,3 +5,7 @@ backend/experiment.ipynb
 backend/google_client_secret.json
 alembic/
 alembic.ini
+Dockerfile.backend
+Dockerfile.frontend
+.dockerignore
+docker-compose.yaml

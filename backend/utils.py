@@ -9,6 +9,8 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain.callbacks.base import AsyncCallbackHandler
 from langchain.schema import LLMResult
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
+from langchain_together import ChatTogether
 from backend.config import settings
 from backend import schemas
 import json
@@ -43,7 +45,9 @@ def decrypt_credentials(encrypted: str) -> dict:
 
 
 ## llm agent ---------------------------------------------------------------------------
-llm = ChatOpenAI(
+## OpenAI provides paid models, HuggingFace provides opensource models
+
+plans_llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.8,
         max_tokens=None,
@@ -54,6 +58,21 @@ llm = ChatOpenAI(
         # organization="...",
         # other params...
     )
+
+# repo_id = "meta-llama/Meta-Llama-3-70B-Instruct"
+# HUGGINGFACEHUB_API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+# plans_llm = HuggingFaceEndpoint(
+#     repo_id=repo_id,
+#     max_new_tokens=1024,
+#     temperature=0.8,
+#     huggingfacehub_api_token=HUGGINGFACEHUB_API_TOKEN
+#     # provider="auto",  # set your provider here hf.co/settings/inference-providers
+#     # provider="hyperbolic",
+#     # provider="nebius",
+#     # provider="together",
+# )
+
+# plans_llm = ChatHuggingFace(llm = plans_llm)
 
 ## system promt and query ---------------------------------------------------------------
 system_prompt = """
@@ -238,16 +257,15 @@ def get_todays_plan(preferences: schemas.Preferences, list_of_task_failures = []
             "list_of_task_successes": lambda x: x["list_of_task_successes"]
         }
         | plans_prompt 
-        | llm
+        | plans_llm
         )
     ai_message = pipeline.invoke(preferences_dict)
-    # print("Raw LLM response:", ai_message.content)
     return json.loads(ai_message.content)
 
 
 ## -------------------------------------------------------------------- LLM agent for chat bot --------------------------
 
-llm = ChatOpenAI(
+chat_llm = ChatOpenAI(
         model="gpt-4o",
         temperature=0.8,
         max_tokens=None,
@@ -259,12 +277,30 @@ llm = ChatOpenAI(
         # other params...
     )
 
+
+# repo_id = "mistralai/Mistral-7B-Instruct-v0.2"
+# HUGGINGFACEHUB_API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+# chat_llm = HuggingFaceEndpoint(
+#     repo_id=repo_id,
+#     max_new_tokens=512,
+#     temperature=0.8,
+#     huggingfacehub_api_token=HUGGINGFACEHUB_API_TOKEN
+#     # provider="auto",  # set your provider here hf.co/settings/inference-providers
+#     # provider="hyperbolic",
+#     # provider="nebius",
+#     # provider="together",
+# )
+
+# chat_llm = ChatHuggingFace(llm = chat_llm)
+
 # System prompt
 system_prompt_chatbot = """
 - You are a smart fitness and lifestyle planning assistant. 
 - Your job is to provide responses to user queries about health, fitness, nutrition and lifestyle planning.
 - Respond with engaging, well-structured markdown using appropriate emojis, headings, bold text, and bullet points(when appropriate) to make the content visually appealing and reader-friendly.
 - Keep your response concise and to the point always.
+
+Note: if you are using emojees, use standard emojees only applicabple in markdown.
 
 Goal of the user:
 {goal}
@@ -296,7 +332,7 @@ def get_chat_history(user_id: str):
     return chat_map[user_id]
 
 # pipeline wrapped with runnables with message history
-pipeline_chatbot = chat_prompt_chatbot | llm
+pipeline_chatbot = chat_prompt_chatbot | chat_llm
 pipeline_with_history = RunnableWithMessageHistory(
     pipeline_chatbot,
     get_session_history= get_chat_history,
@@ -329,6 +365,7 @@ class TokenStreamHandler(AsyncCallbackHandler):
             yield token  # Yield the token for downstream use (e.g., FastAPI StreamingResponse)
             await asyncio.sleep(0.01) # add tiny delay to have a streaming behaviour
 
+
 handler = TokenStreamHandler()    
 async def get_chatbot_response(user_query: str, 
                                user_id:str, 
@@ -345,6 +382,8 @@ async def get_chatbot_response(user_query: str,
     ):
         yield chunk.content
         
+## ----------- Helper functions for calendar events ---------------------------->
+
 def create_calendar_events(user_plans: schemas.Plans, service):
     
     """Creates calendar events based on the user's plans."""

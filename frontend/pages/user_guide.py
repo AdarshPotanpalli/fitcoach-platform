@@ -35,7 +35,7 @@ with col4:
     st.subheader("✅ Step 4: Give Feedback")
     st.markdown("""
     After completing your tasks, give feedback **before midnight**.
-    This helps track your progress accurately.
+    This helps track your progress accurately. This will also help personalize your daily plans.
     """)
 
 st.markdown("<hr style='border: 1px dashed #ccc;'>", unsafe_allow_html=True)
